@@ -3,19 +3,9 @@
   "tasks": [
     {
       "label": "Start Dev Server",
-      "type": "shell",
-      "command": "npm install && npm run dev",
+      "type": "npm",
+      "script": "dev",
       "isBackground": true,
-      "problemMatcher": {
-        "pattern": {
-          "regexp": "^$"
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "VITE",
-          "endsPattern": "Local:.*http://localhost:3000"
-        }
-      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated"

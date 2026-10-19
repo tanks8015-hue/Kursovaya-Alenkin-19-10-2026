@@ -2,12 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Запустить КВАНТ-СЕРВИС (Chrome)",
-      "type": "chrome",
+      "name": "Запустить КВАНТ-СЕРВИС",
+      "type": "node-terminal",
       "request": "launch",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "Start Dev Server"
+      "command": "node start-local.mjs",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
