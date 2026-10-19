@@ -1,0 +1,6 @@
+{
+  "name": "КВАНТ Сервис — Центр ремонта электроники и CRM",
+  "description": "Интерактивная платформа сервисного центра по ремонту электроники с клиентским порталом отслеживания статуса и CRM-панелью администратора.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
