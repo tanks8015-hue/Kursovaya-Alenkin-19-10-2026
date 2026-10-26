@@ -37,6 +37,7 @@ interface ClientTrackerSectionProps {
   onOpenAuthModal: (initialTab?: 'login' | 'register') => void;
   onSwitchToAdmin?: () => void;
   onMarkNotificationRead?: (ticketId: string) => void;
+  onCancelTicket?: (ticketId: string) => void;
   onAddReview: (
     ticket: RepairTicket,
     input: NewClientReviewInput
@@ -51,6 +52,7 @@ export const ClientTrackerSection: React.FC<ClientTrackerSectionProps> = ({
   onOpenAuthModal,
   onSwitchToAdmin,
   onMarkNotificationRead,
+  onCancelTicket,
   onAddReview,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -526,6 +528,20 @@ export const ClientTrackerSection: React.FC<ClientTrackerSectionProps> = ({
                                   )}
                                 </>
                               )}
+
+                              {isClientLoggedIn &&
+                                onCancelTicket &&
+                                (ticket.status === 'Новая' ||
+                                  ticket.status === 'Ожидает Мастера') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onCancelTicket(ticket.id)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-300 hover:bg-rose-100 rounded-md transition-colors cursor-pointer"
+                                  >
+                                    <X className="w-3 h-3" />
+                                    <span>Отменить заявку</span>
+                                  </button>
+                                )}
                             </div>
                           </td>
                         </tr>

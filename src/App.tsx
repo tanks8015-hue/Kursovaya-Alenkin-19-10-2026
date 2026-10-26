@@ -24,6 +24,7 @@ import {
   createClientReviewRecord,
   applyAdminUpdate,
   deleteTicketRecord,
+  cancelClientTicket,
   getUserTickets,
   getUnreadStatusChangedTickets,
   markTicketNotificationRead,
@@ -97,12 +98,16 @@ export default function App() {
       activeUser.role === 'master'
     ) {
       const normalizedPhone = input.clientPhone.replace(/\D/g, '');
-      const existingClient = users.find(
-        (u) =>
-          u.role === 'client' &&
-          (u.phone.replace(/\D/g, '') === normalizedPhone ||
-            u.name.toLowerCase() === input.clientName.trim().toLowerCase())
-      );
+      const normalizedCompare =
+        normalizedPhone.startsWith('8') && normalizedPhone.length === 11
+          ? '7' + normalizedPhone.slice(1)
+          : normalizedPhone;
+      const existingClient = users.find((u) => {
+        if (u.role !== 'client') return false;
+        const d = u.phone.replace(/\D/g, '');
+        const norm = d.startsWith('8') && d.length === 11 ? '7' + d.slice(1) : d;
+        return norm === normalizedCompare;
+      });
 
       if (existingClient) {
         activeUser = existingClient;
@@ -174,6 +179,13 @@ export default function App() {
   const handleAdminDeleteTicket = (ticketId: string) => {
     if (currentUser?.role !== 'admin') return;
     const updated = deleteTicketRecord(tickets, ticketId);
+    setTickets(updated);
+    saveTicketsToStorage(updated);
+  };
+
+  const handleClientCancelTicket = (ticketId: string) => {
+    if (!currentUser || currentUser.role !== 'client') return;
+    const updated = cancelClientTicket(tickets, ticketId, currentUser.id);
     setTickets(updated);
     saveTicketsToStorage(updated);
   };
@@ -334,6 +346,7 @@ export default function App() {
               onOpenAuthModal={handleOpenAuthModal}
               onSwitchToAdmin={handleSwitchToAdmin}
               onMarkNotificationRead={handleMarkNotificationRead}
+              onCancelTicket={handleClientCancelTicket}
               onAddReview={handleAddClientReview}
             />
             <ReviewsSection reviews={reviews} />

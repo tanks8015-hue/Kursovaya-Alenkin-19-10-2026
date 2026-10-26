@@ -27,6 +27,8 @@ const getProgressByStatus = (status: TicketStatus): number => {
   switch (status) {
     case 'Новая':
       return 15;
+    case 'Ожидает Мастера':
+      return 25;
     case 'На диагностике':
       return 35;
     case 'Принята':

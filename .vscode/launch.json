@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "Запустить КВАНТ-СЕРВИС",
-      "type": "node-terminal",
+      "type": "node",
       "request": "launch",
-      "command": "node start-local.mjs",
+      "program": "${workspaceFolder}/start-local.mjs",
       "cwd": "${workspaceFolder}"
     }
   ]

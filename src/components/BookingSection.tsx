@@ -37,7 +37,10 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
   const [deviceType, setDeviceType] = useState<DeviceType>('Смартфон');
   const [brandModel, setBrandModel] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
-  const [preferredDate, setPreferredDate] = useState('2026-10-19');
+  const [preferredDate, setPreferredDate] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return today >= '2026-01-01' && today <= '2027-12-31' ? today : '2026-10-25';
+  });
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -486,6 +489,20 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                     </a>
                     , чтобы отслеживать статус ремонта.
                   </p>
+                  {currentUser && (
+                    <div className="mt-2 pt-2 border-t border-emerald-200 text-xs text-emerald-900 font-medium">
+                      Данные для входа в ваш личный кабинет: логин{' '}
+                      <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-emerald-300">
+                        {currentUser.login}
+                      </span>{' '}
+                      (или телефон{' '}
+                      <span className="font-mono font-bold">{currentUser.phone}</span>),
+                      пароль:{' '}
+                      <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-white border border-emerald-300">
+                        {currentUser.password}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 

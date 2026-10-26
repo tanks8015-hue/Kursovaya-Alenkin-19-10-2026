@@ -649,16 +649,30 @@ export const authenticateUser = (
     return { success: true, user: foundMaster };
   }
 
-  const found = users.find(
-    (u) =>
-      u.login.toLowerCase() === trimmedLogin.toLowerCase() &&
-      u.password === trimmedPassword
-  );
+  const rawDigits = trimmedLogin.replace(/\D/g, '');
+  const normalizedPhoneDigits =
+    rawDigits.length === 11 && rawDigits.startsWith('8')
+      ? '7' + rawDigits.slice(1)
+      : rawDigits;
+
+  const found = users.find((u) => {
+    const userPhoneDigits = u.phone.replace(/\D/g, '');
+    const normalizedUserPhone =
+      userPhoneDigits.length === 11 && userPhoneDigits.startsWith('8')
+        ? '7' + userPhoneDigits.slice(1)
+        : userPhoneDigits;
+    const isLoginMatch = u.login.toLowerCase() === trimmedLogin.toLowerCase();
+    const isPhoneMatch =
+      normalizedPhoneDigits.length === 11 &&
+      normalizedUserPhone === normalizedPhoneDigits;
+    return (isLoginMatch || isPhoneMatch) && u.password === trimmedPassword;
+  });
 
   if (!found) {
     return {
       success: false,
-      error: 'Неверный логин или пароль. Проверьте введенные данные или зарегистрируйтесь.',
+      error:
+        'Неверный логин (или телефон) либо пароль. Проверьте введенные данные или зарегистрируйтесь.',
     };
   }
 
@@ -691,6 +705,20 @@ export const registerNewUser = (
   const phoneCheck = validatePhoneStrict(phone);
   if (!phoneCheck.valid) {
     fieldErrors.phone = phoneCheck.error!;
+  } else {
+    const inputPhoneDigits = phone.replace(/\D/g, '');
+    const normalizedInputPhone =
+      inputPhoneDigits.startsWith('8')
+        ? '7' + inputPhoneDigits.slice(1)
+        : inputPhoneDigits;
+    const existingPhoneUser = existingUsers.find((u) => {
+      const d = u.phone.replace(/\D/g, '');
+      const norm = d.startsWith('8') ? '7' + d.slice(1) : d;
+      return norm === normalizedInputPhone;
+    });
+    if (existingPhoneUser) {
+      fieldErrors.phone = `Этот номер уже зарегистрирован (логин: ${existingPhoneUser.login}). Перейдите на вкладку «Вход».`;
+    }
   }
 
   if (login.length < 3 || login.length > 24) {
@@ -958,6 +986,28 @@ export const deleteTicketRecord = (
   ticketId: string
 ): RepairTicket[] => {
   return tickets.filter((ticket) => ticket.id !== ticketId);
+};
+
+export const cancelClientTicket = (
+  tickets: RepairTicket[],
+  ticketId: string,
+  userId: string
+): RepairTicket[] => {
+  return tickets.map((ticket) => {
+    if (
+      ticket.id === ticketId &&
+      ticket.userId === userId &&
+      (ticket.status === 'Новая' || ticket.status === 'Ожидает Мастера')
+    ) {
+      return {
+        ...ticket,
+        status: 'Отменен',
+        master: 'Не назначен',
+        hasUnreadStatusChange: false,
+      };
+    }
+    return ticket;
+  });
 };
 
 export const validateClientReviewInput = (
@@ -1231,7 +1281,7 @@ export const buildServiceVoucherPrintHtml = (ticket: RepairTicket): string => {
             Лаборатория компонентного ремонта электроники · ООО «КВАНТ Сервис»
           </div>
           <div style="font-size: 10px; font-family: ${monoFont}; color: #475569; margin-top: 2px;">
-            ИНН 7704891205 · КПП 770401001 · г. Москва, ул. Инженерная, д. 14, стр. 2 · Тел.: +7 (495) 128-44-00
+            ИНН 7704891205 · КПП 770401001 · г. Москва, ул. Малая Бронная, д. 24 · Тел.: +7 (495) 128-44-00
           </div>
         </div>
         <div style="text-align: right; border: 1.5px solid #64748b; border-radius: 8px; padding: 8px 12px; background: #f8fafc;">

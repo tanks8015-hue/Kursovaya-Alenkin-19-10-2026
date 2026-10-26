@@ -293,7 +293,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   htmlFor="admin-login-input"
                   className="block text-xs font-semibold text-slate-800 mb-1.5"
                 >
-                  Логин
+                  Логин или номер телефона
                 </label>
                 <input
                   id="admin-login-input"
@@ -301,7 +301,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   required
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
-                  placeholder="Логин клиента или 1 для администратора"
+                  placeholder="Логин, телефон (+7...) или 1 для админа"
                   className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent font-mono"
                 />
               </div>
