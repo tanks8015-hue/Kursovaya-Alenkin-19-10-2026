@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   Printer,
   Lock,
+  BarChart3,
+  ClipboardList,
 } from 'lucide-react';
 import {
   AdminUpdateTicketInput,
@@ -29,6 +31,7 @@ import {
 import { StatusIndicator } from './StatusIndicator';
 import { TicketEditModal } from './TicketEditModal';
 import { ServiceVoucherModal } from './ServiceVoucherModal';
+import { CrmAnalyticsPanel } from './CrmAnalyticsPanel';
 
 interface AdminDashboardProps {
   tickets: RepairTicket[];
@@ -54,6 +57,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState<boolean>(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [activeCrmTab, setActiveCrmTab] = useState<'orders' | 'analytics'>(
+    'orders'
+  );
 
   const isMaster = currentUser?.role === 'master';
   const canDelete = currentUser?.role === 'admin';
@@ -146,6 +152,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Перейти на витрину клиента</span>
             </button>
+
+            <button
+              type="button"
+              data-testid="crm-analytics-toggle-btn"
+              onClick={() =>
+                setActiveCrmTab((prev) =>
+                  prev === 'analytics' ? 'orders' : 'analytics'
+                )
+              }
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-lg border transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeCrmTab === 'analytics'
+                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
+                  : 'bg-[#F1F5F9] text-blue-800 border-blue-300 hover:bg-blue-50'
+              }`}
+            >
+              {activeCrmTab === 'analytics' ? (
+                <>
+                  <ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>К журналу заявок ({visibleTickets.length})</span>
+                </>
+              ) : (
+                <>
+                  <BarChart3 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Аналитика</span>
+                </>
+              )}
+            </button>
+
             {canDelete &&
               (confirmReset ? (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-300 rounded-lg text-xs">
@@ -186,7 +220,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* 1. Dashboard Statistics Strip */}
+        {activeCrmTab === 'analytics' ? (
+          <CrmAnalyticsPanel
+            tickets={visibleTickets}
+            isMaster={isMaster}
+            masterName={currentUser?.name}
+          />
+        ) : (
+          <>
+            {/* 1. Dashboard Statistics Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white border-2 border-slate-300 shadow-xs rounded-xl p-5">
             <p className="text-xs font-semibold text-slate-600 mb-1">
@@ -658,6 +700,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </table>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* 4. Ticket Management Modal */}

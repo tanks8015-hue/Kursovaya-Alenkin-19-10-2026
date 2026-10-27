@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   INITIAL_TICKETS,
   INITIAL_USERS,
+  CLIENT_REVIEWS,
   MASTER_ACCOUNTS,
   TICKET_STATUSES,
   formatPhoneMask,
@@ -18,6 +19,7 @@ import {
   computeMastersWorkload,
   validateClientReviewInput,
   createClientReviewRecord,
+  deleteReviewRecord,
   applyAdminUpdate,
   getUnreadStatusChangedTickets,
   markTicketNotificationRead,
@@ -30,6 +32,8 @@ import {
   buildServiceVoucherPrintHtml,
   stripPriceFromIssue,
   toggleCategoryIssueSelection,
+  computeCrmAnalytics,
+  getTodayDateISO,
 } from './repairStore.ts';
 
 test('formatPhoneMask automatically formats raw digits into +7 (XXX) XXX-XX-XX without manual brackets or dashes', () => {
@@ -230,8 +234,8 @@ test('filterTickets searches across all CRM columns (ID, dates, client, userId, 
   assert.equal(byDesc.length, 1);
   assert.equal(byDesc[0].id, 'KV-2041');
 
-  // By createdAt
-  const byCreatedDate = filterTickets(INITIAL_TICKETS, '2026-10-14 12:15', 'ALL');
+  // By createdAt (September 09 month ticket)
+  const byCreatedDate = filterTickets(INITIAL_TICKETS, '2026-09-14 12:15', 'ALL');
   assert.equal(byCreatedDate.length, 1);
   assert.equal(byCreatedDate[0].id, 'KV-2032');
 
@@ -391,5 +395,82 @@ test('stripPriceFromIssue removes price suffix and toggleCategoryIssueSelection 
   assert.equal(
     step3.formattedDescription,
     'Чистка от пыли и замена термопасты (не шумит и не греется)'
+  );
+});
+
+test('computeCrmAnalytics computes September (2026-09) vs October (2026-10) metrics and breakdowns accurately', () => {
+  const allAnalytics = computeCrmAnalytics(INITIAL_TICKETS, 'ALL');
+  assert.equal(allAnalytics.periodTicketsCount, 10);
+  assert.equal(allAnalytics.monthlyComparison[0].monthKey, '2026-09');
+  assert.equal(allAnalytics.monthlyComparison[0].ticketsCount, 5);
+  assert.equal(allAnalytics.monthlyComparison[1].monthKey, '2026-10');
+  assert.equal(allAnalytics.monthlyComparison[1].ticketsCount, 5);
+
+  const sepOnly = computeCrmAnalytics(INITIAL_TICKETS, '2026-09');
+  assert.equal(sepOnly.periodTicketsCount, 5);
+  assert.equal(sepOnly.totalRevenue, 35900);
+
+  const octOnly = computeCrmAnalytics(INITIAL_TICKETS, '2026-10');
+  assert.equal(octOnly.periodTicketsCount, 5);
+  assert.equal(octOnly.totalRevenue, 33200);
+});
+
+test('validateNewTicketInput rejects past preferredDate and allows today or future dates', () => {
+  const fixedNow = new Date(2026, 9, 27, 10, 0, 0); // 2026-10-27 local
+  assert.equal(getTodayDateISO(fixedNow), '2026-10-27');
+
+  const pastDateCheck = validateNewTicketInput(
+    {
+      userId: 'usr-101',
+      clientName: 'Александр Воронов',
+      clientPhone: '+7 (916) 482-19-04',
+      deviceType: 'Смартфон',
+      brandModel: 'iPhone 15 Pro',
+      issueDescription: 'Замена разбитого стекла дисплея',
+      preferredDate: '2026-10-26',
+    },
+    fixedNow
+  );
+  assert.equal(pastDateCheck.valid, false);
+  assert.match(pastDateCheck.fieldErrors?.preferredDate || '', /прошедшую дату/);
+
+  const todayDateCheck = validateNewTicketInput(
+    {
+      userId: 'usr-101',
+      clientName: 'Александр Воронов',
+      clientPhone: '+7 (916) 482-19-04',
+      deviceType: 'Смартфон',
+      brandModel: 'iPhone 15 Pro',
+      issueDescription: 'Замена разбитого стекла дисплея',
+      preferredDate: '2026-10-27',
+    },
+    fixedNow
+  );
+  assert.equal(todayDateCheck.valid, true);
+});
+
+test('deleteReviewRecord allows only admin to delete reviews and blocks masters, clients, and guests', () => {
+  const targetId = CLIENT_REVIEWS[0].id;
+
+  // Client or Master cannot delete reviews
+  assert.equal(
+    deleteReviewRecord(CLIENT_REVIEWS, targetId, 'client').length,
+    CLIENT_REVIEWS.length
+  );
+  assert.equal(
+    deleteReviewRecord(CLIENT_REVIEWS, targetId, 'master').length,
+    CLIENT_REVIEWS.length
+  );
+  assert.equal(
+    deleteReviewRecord(CLIENT_REVIEWS, targetId, null).length,
+    CLIENT_REVIEWS.length
+  );
+
+  // Admin can delete reviews
+  const afterAdminDelete = deleteReviewRecord(CLIENT_REVIEWS, targetId, 'admin');
+  assert.equal(afterAdminDelete.length, CLIENT_REVIEWS.length - 1);
+  assert.equal(
+    afterAdminDelete.some((r) => r.id === targetId),
+    false
   );
 });

@@ -17,6 +17,7 @@ import {
   TicketStatus,
 } from '../types';
 import {
+  getTodayDateISO,
   isServiceVoucherUnlocked,
   TICKET_STATUSES,
 } from '../utils/repairStore';
@@ -49,6 +50,9 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
+  const todayISO = getTodayDateISO();
+  const minReadyDate = todayISO;
+
   useEffect(() => {
     if (ticket) {
       setStatus(ticket.status);
@@ -57,7 +61,14 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
           ? 'Не назначен'
           : ticket.master
       );
-      setExpectedReadyDate(ticket.expectedReadyDate || '');
+      const currentToday = getTodayDateISO();
+      setExpectedReadyDate(
+        ticket.expectedReadyDate && ticket.expectedReadyDate >= currentToday
+          ? ticket.expectedReadyDate
+          : ticket.expectedReadyDate
+          ? currentToday
+          : ''
+      );
       setFinalPriceStr(
         ticket.finalPrice !== null ? String(ticket.finalPrice) : ''
       );
@@ -81,9 +92,6 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
   const recommendedMaster = [...mastersWorkload].sort(
     (a, b) => a.activeCount - b.activeCount
   )[0];
-  const minReadyDate = /^\d{4}-\d{2}-\d{2}/.test(ticket.createdAt)
-    ? ticket.createdAt.slice(0, 10)
-    : '2026-01-01';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,10 +130,10 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
       return;
     }
 
-    // 2. Validate expectedReadyDate against ticket creation date
+    // 2. Validate expectedReadyDate against today's date (disallow past dates)
     if (expectedReadyDate && expectedReadyDate < minReadyDate) {
       setValidationError(
-        `Ошибка: ожидаемая дата готовности (${expectedReadyDate}) не может быть раньше даты создания заявки (${minReadyDate}).`
+        `Ошибка: ожидаемая дата готовности (${expectedReadyDate}) не может быть в прошлом (выберите от сегодня — ${minReadyDate} и дальше).`
       );
       return;
     }
@@ -499,10 +507,18 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
                 id="edit-ready-date"
                 type="date"
                 min={minReadyDate}
+                max="2027-12-31"
                 value={expectedReadyDate}
                 onChange={(e) => {
-                  setExpectedReadyDate(e.target.value);
-                  setValidationError(null);
+                  const val = e.target.value;
+                  setExpectedReadyDate(val);
+                  if (val && val < minReadyDate) {
+                    setValidationError(
+                      `Ошибка: нельзя выбрать прошедшую дату готовности (выберите от сегодня — ${minReadyDate} и дальше).`
+                    );
+                  } else {
+                    setValidationError(null);
+                  }
                 }}
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent font-mono tabular-nums"
               />

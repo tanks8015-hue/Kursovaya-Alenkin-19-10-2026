@@ -4,6 +4,8 @@ import { RepairTicket, UserAccount } from '../types';
 
 interface HeaderProps {
   mode: 'client' | 'admin';
+  clientPage?: 'main' | 'reviews';
+  reviewsCount?: number;
   currentUser: UserAccount | null;
   myTicketsCount: number;
   staffTicketsCount?: number;
@@ -12,12 +14,16 @@ interface HeaderProps {
   onMarkAllNotificationsRead?: () => void;
   onOpenAuthModal: (initialTab?: 'login' | 'register') => void;
   onSwitchToClient: () => void;
+  onOpenReviewsPage?: () => void;
+  onOpenMainSection?: (sectionId?: string) => void;
   onSwitchToAdmin: () => void;
   onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   mode,
+  clientPage = 'main',
+  reviewsCount,
   currentUser,
   myTicketsCount,
   staffTicketsCount = 0,
@@ -26,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   onMarkAllNotificationsRead,
   onOpenAuthModal,
   onSwitchToClient,
+  onOpenReviewsPage,
+  onOpenMainSection,
   onSwitchToAdmin,
   onLogout,
 }) => {
@@ -40,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-30 bg-slate-900 text-white border-b border-slate-800 shadow-sm">
       <div className="max-w-[1360px] mx-auto flex items-center justify-between gap-4 px-6 py-3">
-        {/* Zone 1: Brand Logo + Wordmark + Address & Phone (like reference header) */}
+        {/* Zone 1: Brand Logo + Wordmark + Address & Phone */}
         <div className="flex items-center gap-6 shrink-0">
           <a
             href="#top"
@@ -48,8 +56,11 @@ export const Header: React.FC<HeaderProps> = ({
               e.preventDefault();
               if (mode === 'admin') {
                 onSwitchToClient();
+              } else if (onOpenMainSection) {
+                onOpenMainSection('top');
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="inline-flex items-center gap-3 group whitespace-nowrap shrink-0 cursor-pointer"
           >
@@ -137,18 +148,38 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <a
               href="#services"
-              className="text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 font-semibold"
+              onClick={(e) => {
+                if (onOpenMainSection) {
+                  e.preventDefault();
+                  onOpenMainSection('services');
+                }
+              }}
+              className={`hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 ${
+                clientPage === 'main' ? 'text-white font-semibold' : ''
+              }`}
             >
               Услуги и цены
             </a>
             <a
               href="#booking-form"
+              onClick={(e) => {
+                if (onOpenMainSection) {
+                  e.preventDefault();
+                  onOpenMainSection('booking-form');
+                }
+              }}
               className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
             >
               Оставить заявку
             </a>
             <a
               href="#client-cabinet"
+              onClick={(e) => {
+                if (onOpenMainSection) {
+                  e.preventDefault();
+                  onOpenMainSection('client-cabinet');
+                }
+              }}
               className="text-blue-300 hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 font-semibold"
             >
               {isStaff
@@ -157,12 +188,20 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Мои заявки (${myTicketsCount})`
                 : 'Статус ремонта'}
             </a>
-            <a
-              href="#reviews"
-              className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
+            <button
+              type="button"
+              data-testid="nav-reviews-tab"
+              onClick={() => onOpenReviewsPage?.()}
+              className={`hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                clientPage === 'reviews'
+                  ? 'text-emerald-400 font-bold underline'
+                  : ''
+              }`}
             >
-              Отзывы
-            </a>
+              {typeof reviewsCount === 'number'
+                ? `Отзывы (${reviewsCount})`
+                : 'Отзывы'}
+            </button>
             {isStaff && (
               <button
                 type="button"
@@ -190,6 +229,16 @@ export const Header: React.FC<HeaderProps> = ({
             >
               Витрина сайта
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                onSwitchToClient();
+                onOpenReviewsPage?.();
+              }}
+              className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Отзывы
+            </button>
           </nav>
         )}
 
@@ -198,6 +247,12 @@ export const Header: React.FC<HeaderProps> = ({
           {mode === 'client' && (
             <a
               href="#booking-form"
+              onClick={(e) => {
+                if (onOpenMainSection) {
+                  e.preventDefault();
+                  onOpenMainSection('booking-form');
+                }
+              }}
               className="hidden sm:inline-flex items-center px-3.5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap shrink-0"
             >
               Оставить заявку

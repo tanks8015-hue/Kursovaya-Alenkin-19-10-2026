@@ -22,6 +22,7 @@ import {
   saveSessionUser,
   createTicketRecord,
   createClientReviewRecord,
+  deleteReviewRecord,
   applyAdminUpdate,
   deleteTicketRecord,
   cancelClientTicket,
@@ -61,6 +62,7 @@ export default function App() {
       ? 'admin'
       : 'client';
   });
+  const [clientPage, setClientPage] = useState<'main' | 'reviews'>('main');
 
   const [authModalState, setAuthModalState] = useState<{
     isOpen: boolean;
@@ -186,6 +188,13 @@ export default function App() {
     const updated = deleteTicketRecord(tickets, ticketId);
     setTickets(updated);
     saveTicketsToStorage(updated);
+  };
+
+  const handleAdminDeleteReview = (reviewId: string) => {
+    if (currentUser?.role !== 'admin') return;
+    const updated = deleteReviewRecord(reviews, reviewId, currentUser.role);
+    setReviews(updated);
+    saveReviewsToStorage(updated);
   };
 
   const handleClientCancelTicket = (ticketId: string) => {
@@ -332,60 +341,94 @@ export default function App() {
     }
   };
 
+  const handleOpenMainSection = (sectionId?: string) => {
+    setMode('client');
+    setClientPage('main');
+    setTimeout(() => {
+      if (!sectionId || sectionId === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }, 30);
+  };
+
+  const handleOpenReviewsPage = () => {
+    setMode('client');
+    setClientPage('reviews');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#E2E8F0] text-slate-900">
       <Header
         mode={mode}
+        clientPage={clientPage}
         currentUser={currentUser}
         myTicketsCount={myTickets.length}
         staffTicketsCount={staffTickets.length}
+        reviewsCount={reviews.length}
         unreadStatusTickets={unreadStatusTickets}
         onMarkNotificationRead={handleMarkNotificationRead}
         onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         onOpenAuthModal={handleOpenAuthModal}
         onSwitchToClient={() => {
           setMode('client');
+          setClientPage('main');
           window.scrollTo(0, 0);
         }}
+        onOpenMainSection={handleOpenMainSection}
+        onOpenReviewsPage={handleOpenReviewsPage}
         onSwitchToAdmin={handleSwitchToAdmin}
         onLogout={handleLogout}
       />
 
       <main className="flex-1">
         {mode === 'client' ? (
-          <>
-            <ServicesSection
-              selectedDevice={preselectedDevice}
-              selectedIssues={selectedIssues}
-              onToggleServiceIssue={handleToggleServiceIssue}
-              onSelectServiceDevice={handleSelectServiceDevice}
-              onQuickTrackClick={handleQuickTrackClick}
-              currentUser={currentUser}
-              myTicketsCount={myTickets.length}
-              staffTicketsCount={staffTickets.length}
-              onSwitchToAdmin={handleSwitchToAdmin}
-            />
-            <BookingSection
-              currentUser={currentUser}
-              preselectedDevice={preselectedDevice}
-              presetIssue={presetIssue}
-              onDeviceCategoryChange={handleDeviceCategoryChange}
-              onCreateTicket={handleCreateTicket}
-              onOpenAuthModal={handleOpenAuthModal}
-            />
-            <ClientTrackerSection
-              myTickets={myTickets}
-              staffTickets={staffTickets}
+          clientPage === 'reviews' ? (
+            <ReviewsSection
               reviews={reviews}
-              currentUser={currentUser}
-              onOpenAuthModal={handleOpenAuthModal}
-              onSwitchToAdmin={handleSwitchToAdmin}
-              onMarkNotificationRead={handleMarkNotificationRead}
-              onCancelTicket={handleClientCancelTicket}
-              onAddReview={handleAddClientReview}
+              isAdmin={currentUser?.role === 'admin'}
+              onDeleteReview={handleAdminDeleteReview}
+              onBackToMain={() => handleOpenMainSection('services')}
             />
-            <ReviewsSection reviews={reviews} />
-          </>
+          ) : (
+            <>
+              <ServicesSection
+                selectedDevice={preselectedDevice}
+                selectedIssues={selectedIssues}
+                onToggleServiceIssue={handleToggleServiceIssue}
+                onSelectServiceDevice={handleSelectServiceDevice}
+                onQuickTrackClick={handleQuickTrackClick}
+                currentUser={currentUser}
+                myTicketsCount={myTickets.length}
+                staffTicketsCount={staffTickets.length}
+                onSwitchToAdmin={handleSwitchToAdmin}
+              />
+              <BookingSection
+                currentUser={currentUser}
+                preselectedDevice={preselectedDevice}
+                presetIssue={presetIssue}
+                onDeviceCategoryChange={handleDeviceCategoryChange}
+                onCreateTicket={handleCreateTicket}
+                onOpenAuthModal={handleOpenAuthModal}
+              />
+              <ClientTrackerSection
+                myTickets={myTickets}
+                staffTickets={staffTickets}
+                reviews={reviews}
+                currentUser={currentUser}
+                onOpenAuthModal={handleOpenAuthModal}
+                onSwitchToAdmin={handleSwitchToAdmin}
+                onMarkNotificationRead={handleMarkNotificationRead}
+                onCancelTicket={handleClientCancelTicket}
+                onAddReview={handleAddClientReview}
+              />
+            </>
+          )
         ) : (
           <AdminDashboard
             tickets={tickets}
@@ -395,6 +438,7 @@ export default function App() {
             onResetDemoData={handleResetDemoData}
             onSwitchToClient={() => {
               setMode('client');
+              setClientPage('main');
               window.scrollTo(0, 0);
             }}
           />
@@ -404,6 +448,8 @@ export default function App() {
       <Footer
         currentUser={currentUser}
         onOpenAuthModal={handleOpenAuthModal}
+        onOpenMainSection={handleOpenMainSection}
+        onOpenReviewsPage={handleOpenReviewsPage}
       />
 
       <AdminLoginModal

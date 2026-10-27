@@ -4,11 +4,15 @@ import { UserAccount } from '../types';
 interface FooterProps {
   currentUser: UserAccount | null;
   onOpenAuthModal: (initialTab?: 'login' | 'register') => void;
+  onOpenMainSection?: (sectionId?: string) => void;
+  onOpenReviewsPage?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   currentUser,
   onOpenAuthModal,
+  onOpenMainSection,
+  onOpenReviewsPage,
 }) => {
   return (
     <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-10">
@@ -62,17 +66,36 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-6">
-          <a href="#services" className="hover:text-white transition-colors">
+          <button
+            type="button"
+            onClick={() => onOpenMainSection?.('services')}
+            className="hover:text-white transition-colors cursor-pointer"
+          >
             Услуги и прайс
-          </a>
-          <a href="#booking-form" className="hover:text-white transition-colors">
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenMainSection?.('booking-form')}
+            className="hover:text-white transition-colors cursor-pointer"
+          >
             Создать заявку
-          </a>
-          <a href="#client-cabinet" className="hover:text-white transition-colors">
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenMainSection?.('client-cabinet')}
+            className="hover:text-white transition-colors cursor-pointer"
+          >
             {currentUser?.role === 'admin' || currentUser?.role === 'master'
               ? 'Заявки на ремонт'
               : 'Мои заявки'}
-          </a>
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenReviewsPage?.()}
+            className="hover:text-white transition-colors cursor-pointer"
+          >
+            Отзывы
+          </button>
           {!currentUser && (
             <button
               type="button"

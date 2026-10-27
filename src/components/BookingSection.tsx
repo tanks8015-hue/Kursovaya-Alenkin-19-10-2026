@@ -10,6 +10,7 @@ import { DeviceType, NewTicketInput, RepairTicket, UserAccount } from '../types'
 import {
   DEVICE_TYPES,
   formatPhoneMask,
+  getTodayDateISO,
   validateNewTicketInput,
   validatePhoneStrict,
   validateNameStrict,
@@ -47,10 +48,8 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
   const [deviceType, setDeviceType] = useState<DeviceType>('Смартфон');
   const [brandModel, setBrandModel] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
-  const [preferredDate, setPreferredDate] = useState(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return today >= '2026-01-01' && today <= '2027-12-31' ? today : '2026-10-25';
-  });
+  const todayISO = getTodayDateISO();
+  const [preferredDate, setPreferredDate] = useState(() => getTodayDateISO());
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -408,10 +407,18 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                     id="preferred-date"
                     type="date"
                     required
+                    min={todayISO}
+                    max="2027-12-31"
                     value={preferredDate}
                     onChange={(e) => {
-                      setPreferredDate(e.target.value);
-                      if (fieldErrors.preferredDate) {
+                      const val = e.target.value;
+                      setPreferredDate(val);
+                      if (val && val < todayISO) {
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          preferredDate: `Нельзя выбрать прошедшую дату (доступно от сегодня — ${todayISO} и дальше).`,
+                        }));
+                      } else if (fieldErrors.preferredDate) {
                         setFieldErrors((prev) => ({ ...prev, preferredDate: '' }));
                       }
                     }}

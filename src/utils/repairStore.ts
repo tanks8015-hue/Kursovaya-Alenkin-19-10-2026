@@ -13,7 +13,7 @@ import type {
   UserAccount,
 } from '../types.ts';
 
-export const STORAGE_KEY = 'kvant_service_repair_tickets_v3';
+export const STORAGE_KEY = 'kvant_service_repair_tickets_v4';
 export const USERS_STORAGE_KEY = 'kvant_service_users_v3';
 export const SESSION_STORAGE_KEY = 'kvant_service_current_user_v3';
 export const REVIEWS_STORAGE_KEY = 'kvant_service_reviews_v3';
@@ -256,78 +256,78 @@ export const INITIAL_TICKETS: RepairTicket[] = [
   {
     id: 'KV-2036',
     userId: 'usr-105',
-    createdAt: '2026-10-17 11:10',
+    createdAt: '2026-09-28 11:10',
     clientName: 'Артем Захаров',
     clientPhone: '+7 (926) 612-33-90',
     deviceType: 'Ноутбук',
     brandModel: 'ASUS ROG Zephyrus G16 GU605',
     issueDescription:
       'Артефакты изображения при переключении на дискретную видеокарту RTX 4070, перегрев зоны VRM.',
-    preferredDate: '2026-10-17',
+    preferredDate: '2026-09-28',
     status: 'В работе',
     master: 'Михаил Волков',
-    expectedReadyDate: '2026-10-21',
+    expectedReadyDate: '2026-09-30',
     finalPrice: 12400,
   },
   {
     id: 'KV-2035',
     userId: 'usr-101',
-    createdAt: '2026-10-16 15:30',
+    createdAt: '2026-09-24 15:30',
     clientName: 'Александр Воронов',
     clientPhone: '+7 (916) 482-19-04',
     deviceType: 'Смартфон',
     brandModel: 'Samsung Galaxy S24 Ultra 512GB',
     issueDescription:
       'Попадание влаги в разговорный динамик и отказ модуля автофокуса основной камеры 200 МП.',
-    preferredDate: '2026-10-16',
+    preferredDate: '2026-09-24',
     status: 'Выдана',
     master: 'Алексей Соколов',
-    expectedReadyDate: '2026-10-18',
+    expectedReadyDate: '2026-09-26',
     finalPrice: 8900,
   },
   {
     id: 'KV-2034',
     userId: 'usr-102',
-    createdAt: '2026-10-16 10:45',
+    createdAt: '2026-09-20 10:45',
     clientName: 'Екатерина Смирнова',
     clientPhone: '+7 (925) 731-84-22',
     deviceType: 'Ноутбук',
     brandModel: 'Lenovo ThinkPad X1 Carbon Gen 11',
     issueDescription:
       'Залита клавиатура кофе, залипает нижний ряд клавиш, требуется ультразвуковая чистка платы и замена топкейса.',
-    preferredDate: '2026-10-16',
+    preferredDate: '2026-09-20',
     status: 'Принята',
     master: 'Михаил Волков',
-    expectedReadyDate: '2026-10-20',
+    expectedReadyDate: '2026-09-23',
     finalPrice: 9200,
   },
   {
     id: 'KV-2033',
     userId: 'usr-104',
-    createdAt: '2026-10-15 18:00',
+    createdAt: '2026-09-18 18:00',
     clientName: 'Марина Белова',
     clientPhone: '+7 (915) 204-88-19',
     deviceType: 'Смартфон',
     brandModel: 'Xiaomi 14 Ultra 16/512GB',
     issueDescription:
       'Быстрая разрядка аккумулятора за 3 часа, нагрев корпуса в режиме ожидания, диагностика контроллера питания.',
-    preferredDate: '2026-10-16',
+    preferredDate: '2026-09-19',
     status: 'Принята',
     master: 'Алексей Соколов',
-    expectedReadyDate: '2026-10-19',
+    expectedReadyDate: '2026-09-21',
     finalPrice: 5400,
   },
   {
     id: 'KV-2032',
     userId: 'usr-105',
-    createdAt: '2026-10-14 12:15',
+    createdAt: '2026-09-14 12:15',
     clientName: 'Артем Захаров',
     clientPhone: '+7 (926) 612-33-90',
     deviceType: 'Компьютер / Моноблок',
     brandModel: 'Apple iMac 24 M3',
     issueDescription:
       'Клиент оформил заявку на замену стекла, но решил отложить ремонт до следующей недели.',
-    preferredDate: '2026-10-15',
+    preferredDate: '2026-09-15',
     status: 'Отменен',
     master: 'Не назначен',
     expectedReadyDate: '',
@@ -767,8 +767,16 @@ export const registerNewUser = (
   return { success: true, user: newUser, updatedUsers };
 };
 
+export const getTodayDateISO = (now: Date = new Date()): string => {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const validateNewTicketInput = (
-  input: NewTicketInput
+  input: NewTicketInput,
+  now: Date = new Date()
 ): {
   valid: boolean;
   error?: string;
@@ -813,9 +821,12 @@ export const validateNewTicketInput = (
       'Описание поломки слишком длинное (максимум 500 символов).';
   }
 
+  const todayISO = getTodayDateISO(now);
   if (!input.preferredDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.preferredDate)) {
     fieldErrors.preferredDate = 'Некорректная дата: выберите желаемую дату сдачи в ремонт.';
-  } else if (input.preferredDate < '2026-01-01' || input.preferredDate > '2027-12-31') {
+  } else if (input.preferredDate < todayISO) {
+    fieldErrors.preferredDate = `Некорректная дата: нельзя выбрать прошедшую дату (выберите сегодня — ${todayISO} или дальше).`;
+  } else if (input.preferredDate > '2027-12-31') {
     fieldErrors.preferredDate =
       'Некорректная дата: выберите дату в пределах 2026–2027 гг.';
   }
@@ -1063,6 +1074,17 @@ export const createClientReviewRecord = (
     rating: input.rating,
     createdAt: `${yyyy}-${mm}-${dd}`,
   };
+};
+
+export const deleteReviewRecord = (
+  reviews: ReviewItem[],
+  reviewId: string,
+  currentUserRole?: string | null
+): ReviewItem[] => {
+  if (currentUserRole !== 'admin') {
+    return reviews;
+  }
+  return reviews.filter((r) => r.id !== reviewId);
 };
 
 export interface DashboardMetrics {
@@ -1690,4 +1712,201 @@ export const toggleCategoryIssueSelection = (
     formattedDescription: nextIssues.join('; '),
   };
 };
+
+export interface CrmAnalyticsData {
+  periodTicketsCount: number;
+  completedCount: number;
+  inWorkCount: number;
+  cancelledCount: number;
+  totalRevenue: number;
+  completedRevenue: number;
+  averageCheck: number;
+  completionRate: number;
+  monthlyComparison: Array<{
+    monthKey: string;
+    label: string;
+    ticketsCount: number;
+    completedCount: number;
+    totalRevenue: number;
+    completedRevenue: number;
+    averageCheck: number;
+  }>;
+  byDevice: Array<{
+    deviceType: DeviceType;
+    count: number;
+    sharePercent: number;
+    revenue: number;
+    avgPrice: number;
+  }>;
+  byMaster: Array<{
+    name: string;
+    specialization: string;
+    totalAssigned: number;
+    completedCount: number;
+    inWorkCount: number;
+    revenue: number;
+    avgCheck: number;
+  }>;
+  byStatus: Array<{
+    status: TicketStatus;
+    count: number;
+    sharePercent: number;
+  }>;
+}
+
+export const computeCrmAnalytics = (
+  tickets: RepairTicket[],
+  periodFilter: string = 'ALL'
+): CrmAnalyticsData => {
+  const periodTickets =
+    periodFilter === 'ALL'
+      ? tickets
+      : tickets.filter((t) => t.createdAt.startsWith(periodFilter));
+
+  const nonCancelled = periodTickets.filter((t) => t.status !== 'Отменен');
+  const pricedTickets = nonCancelled.filter(
+    (t) => typeof t.finalPrice === 'number' && t.finalPrice > 0
+  );
+  const completedTickets = periodTickets.filter(
+    (t) => t.status === 'Готова' || t.status === 'Выдана'
+  );
+  const inWorkTickets = periodTickets.filter((t) =>
+    ACTIVE_MASTER_STATUSES.includes(t.status)
+  );
+  const cancelledTickets = periodTickets.filter((t) => t.status === 'Отменен');
+
+  const totalRevenue = pricedTickets.reduce(
+    (sum, t) => sum + (t.finalPrice || 0),
+    0
+  );
+  const completedRevenue = completedTickets.reduce(
+    (sum, t) => sum + (t.finalPrice || 0),
+    0
+  );
+  const averageCheck =
+    pricedTickets.length > 0
+      ? Math.round(totalRevenue / pricedTickets.length)
+      : 0;
+  const completionRate =
+    nonCancelled.length > 0
+      ? Math.round((completedTickets.length / nonCancelled.length) * 100)
+      : 0;
+
+  const buildMonthSummary = (monthKey: string, label: string) => {
+    const mTickets = tickets.filter((t) => t.createdAt.startsWith(monthKey));
+    const mNonCancelled = mTickets.filter((t) => t.status !== 'Отменен');
+    const mPriced = mNonCancelled.filter(
+      (t) => typeof t.finalPrice === 'number' && t.finalPrice > 0
+    );
+    const mCompleted = mTickets.filter(
+      (t) => t.status === 'Готова' || t.status === 'Выдана'
+    );
+    const mTotalRevenue = mPriced.reduce(
+      (sum, t) => sum + (t.finalPrice || 0),
+      0
+    );
+    const mCompletedRevenue = mCompleted.reduce(
+      (sum, t) => sum + (t.finalPrice || 0),
+      0
+    );
+    const mAvgCheck =
+      mPriced.length > 0 ? Math.round(mTotalRevenue / mPriced.length) : 0;
+
+    return {
+      monthKey,
+      label,
+      ticketsCount: mTickets.length,
+      completedCount: mCompleted.length,
+      totalRevenue: mTotalRevenue,
+      completedRevenue: mCompletedRevenue,
+      averageCheck: mAvgCheck,
+    };
+  };
+
+  const monthlyComparison = [
+    buildMonthSummary('2026-09', 'Сентябрь 2026 (09 мес.)'),
+    buildMonthSummary('2026-10', 'Октябрь 2026 (10 мес.)'),
+  ];
+
+  const byDevice = DEVICE_TYPES.map((deviceType) => {
+    const devTickets = periodTickets.filter((t) => t.deviceType === deviceType);
+    const devPriced = devTickets.filter(
+      (t) =>
+        t.status !== 'Отменен' &&
+        typeof t.finalPrice === 'number' &&
+        t.finalPrice > 0
+    );
+    const revenue = devPriced.reduce((sum, t) => sum + (t.finalPrice || 0), 0);
+    const avgPrice =
+      devPriced.length > 0 ? Math.round(revenue / devPriced.length) : 0;
+    const sharePercent =
+      periodTickets.length > 0
+        ? Math.round((devTickets.length / periodTickets.length) * 100)
+        : 0;
+
+    return {
+      deviceType,
+      count: devTickets.length,
+      sharePercent,
+      revenue,
+      avgPrice,
+    };
+  })
+    .filter((d) => d.count > 0)
+    .sort((a, b) => b.revenue - a.revenue || b.count - a.count);
+
+  const byMaster = MASTER_PROFILES.map((profile) => {
+    const mTickets = periodTickets.filter((t) => t.master === profile.name);
+    const mCompleted = mTickets.filter(
+      (t) => t.status === 'Готова' || t.status === 'Выдана'
+    );
+    const mInWork = mTickets.filter((t) =>
+      ACTIVE_MASTER_STATUSES.includes(t.status)
+    );
+    const mPriced = mTickets.filter(
+      (t) =>
+        t.status !== 'Отменен' &&
+        typeof t.finalPrice === 'number' &&
+        t.finalPrice > 0
+    );
+    const revenue = mPriced.reduce((sum, t) => sum + (t.finalPrice || 0), 0);
+    const avgCheck =
+      mPriced.length > 0 ? Math.round(revenue / mPriced.length) : 0;
+
+    return {
+      name: profile.name,
+      specialization: profile.specialization,
+      totalAssigned: mTickets.length,
+      completedCount: mCompleted.length,
+      inWorkCount: mInWork.length,
+      revenue,
+      avgCheck,
+    };
+  }).sort((a, b) => b.revenue - a.revenue);
+
+  const byStatus = TICKET_STATUSES.map((status) => {
+    const count = periodTickets.filter((t) => t.status === status).length;
+    const sharePercent =
+      periodTickets.length > 0
+        ? Math.round((count / periodTickets.length) * 100)
+        : 0;
+    return { status, count, sharePercent };
+  }).filter((s) => s.count > 0);
+
+  return {
+    periodTicketsCount: periodTickets.length,
+    completedCount: completedTickets.length,
+    inWorkCount: inWorkTickets.length,
+    cancelledCount: cancelledTickets.length,
+    totalRevenue,
+    completedRevenue,
+    averageCheck,
+    completionRate,
+    monthlyComparison,
+    byDevice,
+    byMaster,
+    byStatus,
+  };
+};
+
 
