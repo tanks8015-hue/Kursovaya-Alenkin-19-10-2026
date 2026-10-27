@@ -131,8 +131,11 @@ export default function App() {
         saveUsersToStorage(updatedUsers);
         activeUser = newClient;
       }
-      setCurrentUser(activeUser);
-      saveSessionUser(activeUser);
+      // Only switch the active session to the client if the user was an unauthenticated guest
+      if (!currentUser) {
+        setCurrentUser(activeUser);
+        saveSessionUser(activeUser);
+      }
     }
 
     const newTicket = createTicketRecord(tickets, {

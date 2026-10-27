@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, UserPlus, X, AlertCircle, KeyRound } from 'lucide-react';
+import {
+  Lock,
+  UserPlus,
+  X,
+  AlertCircle,
+  KeyRound,
+  ChevronDown,
+  Users,
+  ShieldCheck,
+  Wrench,
+  CheckCircle2,
+} from 'lucide-react';
 import { RegisterUserInput, UserAccount } from '../types';
 import {
   authenticateUser,
   formatPhoneMask,
+  MASTER_ACCOUNTS,
   registerNewUser,
   validatePhoneStrict,
   validateNameStrict,
@@ -25,6 +37,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onSuccessAuth,
 }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(initialTab);
+  const [expandedRoleTab, setExpandedRoleTab] = useState<
+    'clients' | 'admin' | 'masters' | null
+  >(null);
 
   // Login form state
   const [login, setLogin] = useState('');
@@ -50,6 +65,19 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   if (!isOpen) return null;
 
   const regPhoneDigits = regPhone.replace(/\D/g, '').length;
+
+  // All client accounts (newly registered clients shown first so they are immediately accessible)
+  const clientAccounts = users
+    .filter((u) => u.role === 'client')
+    .slice()
+    .sort((a, b) => {
+      const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+      const isNewA = numA > 105 ? 1 : 0;
+      const isNewB = numB > 105 ? 1 : 0;
+      if (isNewA !== isNewB) return isNewB - isNewA;
+      return numA - numB;
+    });
 
   const handleRegBlur = (field: string) => {
     const next = { ...fieldErrors };
@@ -127,6 +155,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setError(null);
   };
 
+  const toggleRoleSection = (section: 'clients' | 'admin' | 'masters') => {
+    setExpandedRoleTab((prev) => (prev === section ? null : section));
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4"
@@ -134,7 +166,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       aria-modal="true"
       aria-labelledby="auth-modal-title"
     >
-      <div className="bg-white border-2 border-slate-300 rounded-xl max-w-lg w-full p-6 sm:p-7 shadow-2xl">
+      <div className="bg-white border-2 border-slate-300 rounded-xl max-w-lg w-full p-6 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
@@ -214,77 +246,212 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
         {activeTab === 'login' ? (
           <>
-            {/* Quick test accounts helper */}
-            <div className="mb-5 p-3.5 rounded-lg bg-slate-100 border border-slate-300 space-y-2.5 text-xs text-slate-700">
-              <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-blue-700" aria-hidden="true" />
-                <span>Быстрый вход для проверки ролей:</span>
+            {/* Expandable Demo Accounts Selector (Clients / Admin / Masters) */}
+            <div className="mb-5 p-3.5 rounded-xl bg-slate-100 border border-slate-300 space-y-2.5 text-xs text-slate-700">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-blue-700" aria-hidden="true" />
+                  <span>Быстрый вход для демо (выберите вкладку):</span>
+                </div>
+                <span className="text-[11px] text-slate-500">
+                  Нажмите для автоподстановки
+                </span>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Клиенты и Администратор:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('alex', '123')}
-                    className="px-2.5 py-1 text-xs font-medium bg-white border border-slate-300 rounded hover:border-blue-600 text-slate-800 cursor-pointer whitespace-nowrap"
-                  >
-                    Клиент 1: alex / 123
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('kate', '123')}
-                    className="px-2.5 py-1 text-xs font-medium bg-white border border-slate-300 rounded hover:border-blue-600 text-slate-800 cursor-pointer whitespace-nowrap"
-                  >
-                    Клиент 2: kate / 123
-                  </button>
+              {/* 3 Expandable Drawer Trigger Buttons */}
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => toggleRoleSection('clients')}
+                  aria-expanded={expandedRoleTab === 'clients'}
+                  className={`flex items-center justify-between gap-1 px-2.5 py-2 rounded-lg border text-[11px] font-bold transition-colors cursor-pointer ${
+                    expandedRoleTab === 'clients'
+                      ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
+                      : 'bg-white text-slate-800 border-slate-300 hover:border-blue-500'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    <span>Клиенты ({clientAccounts.length})</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                      expandedRoleTab === 'clients' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleRoleSection('admin')}
+                  aria-expanded={expandedRoleTab === 'admin'}
+                  className={`flex items-center justify-between gap-1 px-2.5 py-2 rounded-lg border text-[11px] font-bold transition-colors cursor-pointer ${
+                    expandedRoleTab === 'admin'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                      : 'bg-white text-slate-800 border-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>Админ</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                      expandedRoleTab === 'admin' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleRoleSection('masters')}
+                  aria-expanded={expandedRoleTab === 'masters'}
+                  className={`flex items-center justify-between gap-1 px-2.5 py-2 rounded-lg border text-[11px] font-bold transition-colors cursor-pointer ${
+                    expandedRoleTab === 'masters'
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                      : 'bg-white text-slate-800 border-slate-300 hover:border-amber-500'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <Wrench className="w-3.5 h-3.5 shrink-0" />
+                    <span>Мастера ({MASTER_ACCOUNTS.length})</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform ${
+                      expandedRoleTab === 'masters' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Drawer 1: Clients (includes all initial + newly registered users) */}
+              {expandedRoleTab === 'clients' && (
+                <div className="pt-2 border-t border-slate-200 space-y-1.5 max-h-52 overflow-y-auto pr-0.5">
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Нажмите на клиента, чтобы подставить его логин и пароль (новые аккаунты после регистрации добавляются сюда автоматически):
+                  </p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {clientAccounts.map((client) => {
+                      const numId = parseInt(client.id.replace(/\D/g, ''), 10) || 0;
+                      const isNewlyRegistered = numId > 105;
+                      const isSelected =
+                        login === client.login && password === client.password;
+                      return (
+                        <button
+                          key={client.id}
+                          type="button"
+                          onClick={() =>
+                            fillQuickLogin(client.login, client.password)
+                          }
+                          className={`w-full px-3 py-2 rounded-lg border text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-600 text-slate-900'
+                              : isNewlyRegistered
+                              ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100/70 text-slate-900'
+                              : 'bg-white border-slate-300 hover:border-blue-500 text-slate-800'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs text-slate-900 truncate">
+                                {client.name}
+                              </span>
+                              {isNewlyRegistered && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold uppercase rounded bg-emerald-600 text-white shrink-0">
+                                  Новый
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-mono truncate">
+                              {client.phone}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-300 font-mono font-bold text-[11px] text-blue-800">
+                              {client.login} / {client.password}
+                            </span>
+                            {isSelected && (
+                              <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Drawer 2: Administrator */}
+              {expandedRoleTab === 'admin' && (
+                <div className="pt-2 border-t border-slate-200 space-y-1.5">
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Полный доступ ко всем заказам, назначению мастеров и удалению заявок:
+                  </p>
                   <button
                     type="button"
                     onClick={() => fillQuickLogin('1', '1')}
-                    className="px-2.5 py-1 text-xs font-semibold bg-blue-50 border border-blue-300 rounded hover:bg-blue-100 text-blue-800 cursor-pointer whitespace-nowrap"
+                    className={`w-full px-3 py-2.5 rounded-lg border text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                      login === '1' && password === '1'
+                        ? 'bg-blue-50 border-blue-600 text-slate-900'
+                        : 'bg-white border-slate-300 hover:border-slate-700 text-slate-900'
+                    }`}
                   >
-                    Админ CRM: 1 / 1
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">
+                        Администратор CRM (Диспетчер СЦ)
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Управление всеми заявками и нагрузкой инженеров
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="px-2.5 py-1 rounded bg-slate-900 text-white font-mono font-bold text-xs">
+                        1 / 1
+                      </span>
+                      {login === '1' && password === '1' && (
+                        <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
+                      )}
+                    </div>
                   </button>
                 </div>
-              </div>
+              )}
 
-              <div className="space-y-1.5 pt-1 border-t border-slate-200">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Мастера (видят только свои заявки, без удаления):
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('sokolov', '123')}
-                    className="px-2.5 py-1.5 text-left text-[11px] font-medium bg-amber-50/80 border border-amber-300 rounded hover:bg-amber-100 text-slate-900 cursor-pointer whitespace-nowrap"
-                  >
-                    Алексей Соколов: <span className="font-mono font-bold">sokolov / 123</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('volkov', '123')}
-                    className="px-2.5 py-1.5 text-left text-[11px] font-medium bg-amber-50/80 border border-amber-300 rounded hover:bg-amber-100 text-slate-900 cursor-pointer whitespace-nowrap"
-                  >
-                    Михаил Волков: <span className="font-mono font-bold">volkov / 123</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('kovalev', '123')}
-                    className="px-2.5 py-1.5 text-left text-[11px] font-medium bg-amber-50/80 border border-amber-300 rounded hover:bg-amber-100 text-slate-900 cursor-pointer whitespace-nowrap"
-                  >
-                    Сергей Ковалёв: <span className="font-mono font-bold">kovalev / 123</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillQuickLogin('morozov', '123')}
-                    className="px-2.5 py-1.5 text-left text-[11px] font-medium bg-amber-50/80 border border-amber-300 rounded hover:bg-amber-100 text-slate-900 cursor-pointer whitespace-nowrap"
-                  >
-                    Дмитрий Морозов: <span className="font-mono font-bold">morozov / 123</span>
-                  </button>
+              {/* Drawer 3: Masters */}
+              {expandedRoleTab === 'masters' && (
+                <div className="pt-2 border-t border-slate-200 space-y-1.5">
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Инженеры СЦ (видят только свои назначенные заявки, меняют статус и смету):
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {MASTER_ACCOUNTS.map((masterAcc) => {
+                      const isSelected =
+                        login === masterAcc.login &&
+                        password === masterAcc.password;
+                      return (
+                        <button
+                          key={masterAcc.id}
+                          type="button"
+                          onClick={() =>
+                            fillQuickLogin(masterAcc.login, masterAcc.password)
+                          }
+                          className={`px-2.5 py-2 text-left text-[11px] font-medium rounded-lg border transition-colors cursor-pointer flex items-center justify-between gap-1.5 ${
+                            isSelected
+                              ? 'bg-amber-100 border-amber-600 text-slate-950'
+                              : 'bg-amber-50/80 border-amber-300 hover:bg-amber-100 text-slate-900'
+                          }`}
+                        >
+                          <span className="font-bold truncate">
+                            {masterAcc.name}
+                          </span>
+                          <span className="font-mono font-bold text-amber-900 bg-white/90 px-1.5 py-0.5 rounded border border-amber-300 shrink-0">
+                            {masterAcc.login} / {masterAcc.password}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <form onSubmit={handleLoginSubmit} noValidate className="space-y-4">

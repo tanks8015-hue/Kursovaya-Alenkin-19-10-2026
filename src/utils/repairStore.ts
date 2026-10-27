@@ -921,7 +921,9 @@ export const applyAdminUpdate = (
   now: Date = new Date()
 ): RepairTicket[] => {
   const effectiveMaster =
-    update.status === 'Ожидает Мастера' ? 'Не назначен' : update.master;
+    update.status === 'Ожидает Мастера' || update.status === 'Новая'
+      ? 'Не назначен'
+      : update.master;
   return tickets.map((ticket) => {
     if (ticket.id !== ticketId) return ticket;
     const didStatusChange = ticket.status !== update.status;

@@ -52,6 +52,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [voucherTicketId, setVoucherTicketId] = useState<string | null>(null);
   const [statusBanner, setStatusBanner] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState<boolean>(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const isMaster = currentUser?.role === 'master';
   const canDelete = currentUser?.role === 'admin';
@@ -103,6 +105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (selectedTicketId === ticketId) {
       setSelectedTicketId(null);
     }
+    setConfirmDeleteId(null);
     setStatusBanner(`Заявка ${ticketId} удалена из базы сервисного центра.`);
   };
 
@@ -143,16 +146,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Перейти на витрину клиента</span>
             </button>
-            {canDelete && (
-              <button
-                type="button"
-                onClick={onResetDemoData}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-800 bg-[#F1F5F9] border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Сбросить демо-данные (10 заявок)</span>
-              </button>
-            )}
+            {canDelete &&
+              (confirmReset ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-300 rounded-lg text-xs">
+                  <span className="font-bold text-red-900">
+                    Сбросить всю базу к демо?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onResetDemoData();
+                      setConfirmReset(false);
+                      setStatusBanner(
+                        'База данных сброшена к исходным демонстрационным данным (10 заявок).'
+                      );
+                    }}
+                    className="px-2.5 py-1 font-bold text-white bg-red-600 hover:bg-red-700 rounded cursor-pointer"
+                  >
+                    Да, сбросить
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    className="px-2.5 py-1 font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded cursor-pointer"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-800 bg-[#F1F5F9] border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Сбросить демо-данные (10 заявок)</span>
+                </button>
+              ))}
           </div>
         </div>
 
@@ -407,7 +437,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               Все ({visibleTickets.length})
             </button>
-            {TICKET_STATUSES.map((st: TicketStatus) => (
+            {TICKET_STATUSES.filter(
+              (st: TicketStatus) =>
+                !(isMaster && (st === 'Ожидает Мастера' || st === 'Новая'))
+            ).map((st: TicketStatus) => (
               <button
                 key={st}
                 type="button"
@@ -554,17 +587,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 />
                                 <span>Управлять</span>
                               </button>
-                              {canDelete && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteTicket(ticket.id)}
-                                  aria-label={`Удалить заявку ${ticket.id}`}
-                                  title="Удалить заявку"
-                                  className="inline-flex items-center justify-center p-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition-colors shrink-0 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                                </button>
-                              )}
+                              {canDelete &&
+                                (confirmDeleteId === ticket.id ? (
+                                  <div className="inline-flex items-center gap-1 bg-red-50 border border-red-300 rounded-lg px-2 py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteTicket(ticket.id)}
+                                      className="px-1.5 py-0.5 text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 rounded cursor-pointer"
+                                    >
+                                      Удалить
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded cursor-pointer"
+                                    >
+                                      Нет
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDeleteId(ticket.id)}
+                                    aria-label={`Удалить заявку ${ticket.id}`}
+                                    title="Удалить заявку"
+                                    className="inline-flex items-center justify-center p-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition-colors shrink-0 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                  </button>
+                                ))}
                             </div>
 
                             {isServiceVoucherUnlocked(ticket.status) ? (

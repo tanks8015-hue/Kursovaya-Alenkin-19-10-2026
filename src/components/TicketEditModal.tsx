@@ -47,35 +47,43 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
   const [expectedReadyDate, setExpectedReadyDate] = useState<string>('');
   const [finalPriceStr, setFinalPriceStr] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
 
   useEffect(() => {
     if (ticket) {
       setStatus(ticket.status);
       setMaster(
-        ticket.status === 'Ожидает Мастера' ? 'Не назначен' : ticket.master
+        ticket.status === 'Ожидает Мастера' || ticket.status === 'Новая'
+          ? 'Не назначен'
+          : ticket.master
       );
       setExpectedReadyDate(ticket.expectedReadyDate || '');
       setFinalPriceStr(
         ticket.finalPrice !== null ? String(ticket.finalPrice) : ''
       );
       setValidationError(null);
+      setConfirmDelete(false);
     }
   }, [ticket]);
 
   if (!ticket) return null;
 
   const isWaitingForMaster = status === 'Ожидает Мастера';
-  const effectiveMaster = isWaitingForMaster
-    ? 'Не назначен'
-    : isMaster
-    ? ticket.master
-    : master;
+  const effectiveMaster =
+    isWaitingForMaster || status === 'Новая'
+      ? 'Не назначен'
+      : isMaster
+      ? ticket.master
+      : master;
   const selectedMasterInfo = mastersWorkload.find(
     (m) => m.name === effectiveMaster
   );
   const recommendedMaster = [...mastersWorkload].sort(
     (a, b) => a.activeCount - b.activeCount
   )[0];
+  const minReadyDate = /^\d{4}-\d{2}-\d{2}/.test(ticket.createdAt)
+    ? ticket.createdAt.slice(0, 10)
+    : '2026-01-01';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +105,32 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
       return;
     }
 
-    // 2. Validate price format and bounds
+    // 1.5. Block assigning a new ticket to an overloaded master (3/3 slots)
+    if (
+      !isMaster &&
+      selectedMasterInfo &&
+      selectedMasterInfo.activeCount >= selectedMasterInfo.maxCapacity &&
+      ticket.master !== selectedMasterInfo.name &&
+      (status === 'На диагностике' ||
+        status === 'Принята' ||
+        status === 'В работе' ||
+        status === 'Ожидает запчастей')
+    ) {
+      setValidationError(
+        `Ошибка: у мастера ${selectedMasterInfo.name} заняты все слоты (${selectedMasterInfo.activeCount}/${selectedMasterInfo.maxCapacity}). Выберите свободного мастера или поставьте статус «Ожидает Мастера».`
+      );
+      return;
+    }
+
+    // 2. Validate expectedReadyDate against ticket creation date
+    if (expectedReadyDate && expectedReadyDate < minReadyDate) {
+      setValidationError(
+        `Ошибка: ожидаемая дата готовности (${expectedReadyDate}) не может быть раньше даты создания заявки (${minReadyDate}).`
+      );
+      return;
+    }
+
+    // 3. Validate price format and bounds
     let parsedPrice: number | null = null;
     if (finalPriceStr.trim() !== '') {
       const num = Number(finalPriceStr);
@@ -120,10 +153,17 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
       return;
     }
 
+    const finalReadyDate =
+      (status === 'Готова' || status === 'Выдана') && !expectedReadyDate
+        ? ticket.preferredDate >= minReadyDate
+          ? ticket.preferredDate
+          : minReadyDate
+        : expectedReadyDate;
+
     onSave(ticket.id, {
       status,
       master: effectiveMaster,
-      expectedReadyDate,
+      expectedReadyDate: finalReadyDate,
       finalPrice: parsedPrice,
     });
     onClose();
@@ -199,19 +239,29 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
             <select
               id="edit-status"
               value={status}
+              disabled={isMaster && ticket.status === 'Выдана'}
               onChange={(e) => {
                 const nextStatus = e.target.value as TicketStatus;
                 setStatus(nextStatus);
-                if (nextStatus === 'Ожидает Мастера') {
+                if (
+                  nextStatus === 'Ожидает Мастера' ||
+                  nextStatus === 'Новая'
+                ) {
                   setMaster('Не назначен');
                 }
                 setValidationError(null);
               }}
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-500"
             >
-              {TICKET_STATUSES.filter(
-                (st) => !(isMaster && st === 'Ожидает Мастера')
-              ).map((st) => (
+              {TICKET_STATUSES.filter((st) => {
+                if (!isMaster) return true;
+                if (st === ticket.status) return true;
+                return (
+                  st !== 'Новая' &&
+                  st !== 'Ожидает Мастера' &&
+                  st !== 'Отменен'
+                );
+              }).map((st) => (
                 <option key={st} value={st}>
                   {st}
                 </option>
@@ -280,6 +330,9 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
                       type="button"
                       onClick={() => {
                         setMaster(recommendedMaster.name);
+                        if (status === 'Новая') {
+                          setStatus('На диагностике');
+                        }
                         setValidationError(null);
                       }}
                       className="text-[11px] font-semibold text-blue-700 hover:underline cursor-pointer"
@@ -293,10 +346,18 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
               </div>
               <select
                 id="edit-master"
-                value={isWaitingForMaster ? 'Не назначен' : master}
+                value={
+                  isWaitingForMaster || status === 'Новая'
+                    ? 'Не назначен'
+                    : master
+                }
                 disabled={isWaitingForMaster}
                 onChange={(e) => {
-                  setMaster(e.target.value);
+                  const chosen = e.target.value;
+                  setMaster(chosen);
+                  if (chosen !== 'Не назначен' && status === 'Новая') {
+                    setStatus('На диагностике');
+                  }
                   setValidationError(null);
                 }}
                 className={`w-full px-3.5 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent ${
@@ -341,6 +402,9 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
                       onClick={() => {
                         if (isWaitingForMaster) return;
                         setMaster(m.name);
+                        if (status === 'Новая') {
+                          setStatus('На диагностике');
+                        }
                         setValidationError(null);
                       }}
                       className={`p-2.5 rounded-lg border text-left transition-colors ${
@@ -434,8 +498,12 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
               <input
                 id="edit-ready-date"
                 type="date"
+                min={minReadyDate}
                 value={expectedReadyDate}
-                onChange={(e) => setExpectedReadyDate(e.target.value)}
+                onChange={(e) => {
+                  setExpectedReadyDate(e.target.value);
+                  setValidationError(null);
+                }}
                 className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent font-mono tabular-nums"
               />
             </div>
@@ -476,14 +544,36 @@ export const TicketEditModal: React.FC<TicketEditModalProps> = ({
           <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {canDelete ? (
-                <button
-                  type="button"
-                  onClick={handleDeleteClick}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Удалить заявку</span>
-                </button>
+                confirmDelete ? (
+                  <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-300 rounded-lg px-2.5 py-1.5">
+                    <span className="text-xs font-bold text-red-800">
+                      Точно удалить?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDeleteClick}
+                      className="px-2 py-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded cursor-pointer"
+                    >
+                      Да
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="px-2 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded cursor-pointer"
+                    >
+                      Нет
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>Удалить заявку</span>
+                  </button>
+                )
               ) : (
                 <span className="text-xs text-slate-500 font-medium">
                   Режим мастера: редактирование заказа

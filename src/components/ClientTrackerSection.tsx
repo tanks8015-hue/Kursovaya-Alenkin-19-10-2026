@@ -301,28 +301,32 @@ export const ClientTrackerSection: React.FC<ClientTrackerSectionProps> = ({
                 >
                   Все ({activeSourceTickets.length})
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setStatusGroup('Новая')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                    statusGroup === 'Новая'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-700 hover:text-slate-900'
-                  }`}
-                >
-                  Новые
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatusGroup('Ожидает Мастера')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                    statusGroup === 'Ожидает Мастера'
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-700 hover:text-slate-900'
-                  }`}
-                >
-                  Ожидает Мастера
-                </button>
+                {!isMaster && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setStatusGroup('Новая')}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        statusGroup === 'Новая'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-700 hover:text-slate-900'
+                      }`}
+                    >
+                      Новые
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatusGroup('Ожидает Мастера')}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        statusGroup === 'Ожидает Мастера'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-700 hover:text-slate-900'
+                      }`}
+                    >
+                      Ожидает Мастера
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => setStatusGroup('ACTIVE')}

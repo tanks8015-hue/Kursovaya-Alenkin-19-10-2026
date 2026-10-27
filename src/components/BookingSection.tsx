@@ -30,9 +30,15 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
   onCreateTicket,
   onOpenAuthModal,
 }) => {
-  const [clientName, setClientName] = useState(currentUser?.name || '');
+  const isClientUser = currentUser?.role === 'client';
+  const isStaffUser =
+    currentUser?.role === 'admin' || currentUser?.role === 'master';
+
+  const [clientName, setClientName] = useState(
+    isClientUser ? currentUser.name : ''
+  );
   const [clientPhone, setClientPhone] = useState(
-    currentUser?.phone ? formatPhoneMask(currentUser.phone) : ''
+    isClientUser && currentUser.phone ? formatPhoneMask(currentUser.phone) : ''
   );
   const [deviceType, setDeviceType] = useState<DeviceType>('Смартфон');
   const [brandModel, setBrandModel] = useState('');
@@ -48,9 +54,13 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
   const [createdTicket, setCreatedTicket] = useState<RepairTicket | null>(null);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.role === 'client') {
       setClientName(currentUser.name);
       setClientPhone(formatPhoneMask(currentUser.phone));
+      setFieldErrors({});
+    } else if (!currentUser || currentUser.role !== 'client') {
+      setClientName('');
+      setClientPhone('');
       setFieldErrors({});
     }
   }, [currentUser]);
@@ -210,7 +220,7 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
             >
               {/* Current User Account Status Bar inside Form */}
               <div className="mb-6 p-4 rounded-lg bg-white border border-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {currentUser ? (
+                {isClientUser && currentUser ? (
                   <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-800">
                     <UserCheck
                       className="w-4 h-4 text-emerald-600 shrink-0"
@@ -220,6 +230,18 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                       Вы авторизованы как <strong>{currentUser.name}</strong> (логин:{' '}
                       <span className="font-mono font-semibold">{currentUser.login}</span>).
                       Заявка добавится в ваши «Мои заявки».
+                    </span>
+                  </div>
+                ) : isStaffUser && currentUser ? (
+                  <div className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-800">
+                    <UserCheck
+                      className="w-4 h-4 text-blue-700 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Режим сотрудника (<strong>{currentUser.name}</strong>): оформите
+                      заявку на имя и телефон клиента — она привяжется к профилю клиента, а
+                      ваш сеанс сотрудника сохранится.
                     </span>
                   </div>
                 ) : (
