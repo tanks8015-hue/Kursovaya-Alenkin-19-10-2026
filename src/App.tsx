@@ -30,9 +30,9 @@ import {
   markTicketNotificationRead,
   markAllUserTicketNotificationsRead,
   formatTimestamp,
+  toggleCategoryIssueSelection,
 } from './utils/repairStore';
 import { Header } from './components/Header';
-import { HeroSection } from './components/HeroSection';
 import { ServicesSection } from './components/ServicesSection';
 import { BookingSection } from './components/BookingSection';
 import { ClientTrackerSection } from './components/ClientTrackerSection';
@@ -69,6 +69,8 @@ export default function App() {
 
   const [preselectedDevice, setPreselectedDevice] =
     useState<DeviceType | null>(null);
+  const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
+  const [presetIssue, setPresetIssue] = useState<string | null>(null);
 
   useEffect(() => {
     saveTicketsToStorage(tickets);
@@ -265,12 +267,38 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
+  const handleToggleServiceIssue = (
+    deviceType: DeviceType,
+    rawIssue: string
+  ) => {
+    const next = toggleCategoryIssueSelection(
+      { deviceType: preselectedDevice, issues: selectedIssues },
+      deviceType,
+      rawIssue
+    );
+    setPreselectedDevice(next.deviceType);
+    setSelectedIssues(next.issues);
+    setPresetIssue(next.formattedDescription);
+  };
+
   const handleSelectServiceDevice = (deviceType: DeviceType) => {
-    setPreselectedDevice(deviceType);
+    if (preselectedDevice !== deviceType) {
+      setPreselectedDevice(deviceType);
+      setSelectedIssues([]);
+      setPresetIssue('');
+    } else {
+      setPreselectedDevice(deviceType);
+    }
     const formEl = document.getElementById('booking-form');
     if (formEl) {
       formEl.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleDeviceCategoryChange = (deviceType: DeviceType) => {
+    setPreselectedDevice(deviceType);
+    setSelectedIssues([]);
+    setPresetIssue('');
   };
 
   const handleQuickTrackClick = () => {
@@ -326,18 +354,22 @@ export default function App() {
       <main className="flex-1">
         {mode === 'client' ? (
           <>
-            <HeroSection
-              myTickets={myTickets}
-              staffTickets={staffTickets}
-              currentUser={currentUser}
+            <ServicesSection
+              selectedDevice={preselectedDevice}
+              selectedIssues={selectedIssues}
+              onToggleServiceIssue={handleToggleServiceIssue}
+              onSelectServiceDevice={handleSelectServiceDevice}
               onQuickTrackClick={handleQuickTrackClick}
-              onOpenAuthModal={handleOpenAuthModal}
+              currentUser={currentUser}
+              myTicketsCount={myTickets.length}
+              staffTicketsCount={staffTickets.length}
               onSwitchToAdmin={handleSwitchToAdmin}
             />
-            <ServicesSection onSelectServiceDevice={handleSelectServiceDevice} />
             <BookingSection
               currentUser={currentUser}
               preselectedDevice={preselectedDevice}
+              presetIssue={presetIssue}
+              onDeviceCategoryChange={handleDeviceCategoryChange}
               onCreateTicket={handleCreateTicket}
               onOpenAuthModal={handleOpenAuthModal}
             />

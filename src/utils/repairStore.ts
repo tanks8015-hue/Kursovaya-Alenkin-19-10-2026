@@ -345,63 +345,63 @@ export const SERVICES_CATALOG: ServiceItem[] = [
     warranty: 'Гарантия 12 мес.',
     priceFrom: 2400,
     description:
-      'Замена оригинальных OLED-матриц, переклейка стекол в беспылевой камере, восстановление цепи питания и контроллеров заряда U2/Tristar.',
+      'Быстрая замена разбитых экранов и стёкол, установка новых аккумуляторов, чистка после попадания воды, ремонт разъёмов зарядки, динамиков и Face ID.',
     commonIssues: [
-      'Замена дисплейного модуля / стекла — от 3 900 руб.',
-      'Замена аккумулятора с сохранением емкости 100% — от 2 400 руб.',
-      'Восстановление после попадания влаги (УЗ-ванна + пайка) — от 3 500 руб.',
-      'Ремонт Face ID / аудиокодека / модема — от 4 800 руб.',
+      'Замена экрана (дисплейного модуля) или стекла — от 3 900 руб.',
+      'Замена аккумулятора (ёмкость 100%, без ошибок) — от 2 400 руб.',
+      'Восстановление после попадания воды и чистка — от 3 500 руб.',
+      'Ремонт разъёма зарядки / динамика / Face ID — от 2 900 руб.',
     ],
   },
   {
     id: 'srv-laptops',
     index: '02',
-    title: 'Компонентный ремонт ноутбуков и MacBook',
+    title: 'Ремонт ноутбуков и компьютеров',
     deviceType: 'Ноутбук',
     turnaround: 'от 2 часов',
     warranty: 'Гарантия 12 мес.',
     priceFrom: 3200,
     description:
-      'BGA-пайка видеочипов и хабов на инфракрасной станции, ремонт цепей питания материнских плат, замена матриц и клавиатур.',
+      'Чистка от пыли и замена термопасты, ремонт материнских плат и видеокарт без переплаты за новую плату, замена экранов, клавиатур и разъёмов питания.',
     commonIssues: [
-      'Ремонт цепи питания материнской платы — от 4 900 руб.',
-      'Профилактика системы охлаждения с заменой фазового перехода — 3 200 руб.',
-      'Замена матрицы Retina / IPS 120–240 Гц — от 7 500 руб.',
-      'BGA-реболлинг видеочипа / замена мультиконтроллера — от 6 500 руб.',
+      'Чистка от пыли и замена термопасты (не шумит и не греется) — 3 200 руб.',
+      'Ремонт материнской платы и цепей питания — от 4 900 руб.',
+      'Замена экрана (матрицы) ноутбука или MacBook — от 7 500 руб.',
+      'Замена клавиатуры, аккумулятора или петель корпуса — от 3 500 руб.',
     ],
   },
   {
     id: 'srv-tv-monitors',
     index: '03',
-    title: 'Ремонт телевизоров и профессиональных мониторов',
+    title: 'Ремонт телевизоров и мониторов',
     deviceType: 'Телевизор / Монитор',
     turnaround: 'от 1 дня',
     warranty: 'Гарантия 12 мес.',
     priceFrom: 3800,
     description:
-      'Полная замена светодиодной подсветки с доработкой тока драйвера, компонентный ремонт блоков питания и плат T-Con / MainBoard.',
+      'Восстановление изображения и звука: полная замена сгоревшей подсветки экрана, ремонт блоков питания, плат управления и разъёмов HDMI.',
     commonIssues: [
-      'Полная замена комплекта LED-подсветки — от 4 200 руб.',
-      'Ремонт импульсного блока питания (PSU) — от 3 800 руб.',
-      'Восстановление платы управления MainBoard / прошивка NAND — от 4 500 руб.',
-      'Ремонт контроллера матрицы T-Con — от 3 900 руб.',
+      'Есть звук, но тёмный экран (замена LED-подсветки) — от 4 200 руб.',
+      'Телевизор не включается (ремонт блока питания) — от 3 800 руб.',
+      'Ремонт главной платы управления и настройка Smart TV — от 4 500 руб.',
+      'Устранение полос, мерцания и ремонт портов HDMI — от 3 900 руб.',
     ],
   },
   {
     id: 'srv-consoles',
     index: '04',
-    title: 'Ремонт игровых консолей и рабочих станций',
+    title: 'Ремонт игровых консолей и геймпадов',
     deviceType: 'Игровая консоль',
     turnaround: 'от 1 часа',
     warranty: 'Гарантия 12 мес.',
     priceFrom: 2800,
     description:
-      'Замена портов HDMI 2.1 под микроскопом, обслуживание жидкого металла в PlayStation 5, установка потенциометров с датчиками Холла.',
+      'Ремонт PlayStation 5, Xbox и Nintendo Switch: устранение дрифта стиков на геймпадах, замена сломанных портов HDMI, чистка от перегрева и шума.',
     commonIssues: [
-      'Замена порта HDMI 2.1 + ретаймера — 4 200 руб.',
-      'Чистка и замена жидкого металла Thermal Grizzly — 3 400 руб.',
-      'Установка 3D-аналогов с датчиками Холла (DualSense / Xbox) — 2 800 руб.',
-      'Ремонт встроенного блока питания консоли — от 4 600 руб.',
+      'Ремонт дрифта стиков геймпада (установка датчиков Холла) — 2 800 руб.',
+      'Чистка консоли от пыли и замена жидкого металла PS5 — 3 400 руб.',
+      'Замена сломанного разъёма HDMI 2.1 (нет сигнала на ТВ) — 4 200 руб.',
+      'Ремонт блока питания и дисковода приставки — от 4 600 руб.',
     ],
   },
 ];
@@ -1643,3 +1643,51 @@ export const saveSessionUser = (user: UserAccount | null): void => {
     // Ignore storage errors
   }
 };
+
+/**
+ * Strips price suffix (e.g., " — от 2 400 руб." or " — 3 200 ₽") from a catalog issue string
+ * so only the pure issue name is transferred to the repair booking form.
+ */
+export const stripPriceFromIssue = (rawIssue: string): string => {
+  return rawIssue
+    .split(/\s*[—–-]\s*(?:от\s*)?\d[\d\s]*(?:руб\.?|₽)/i)[0]
+    .trim();
+};
+
+/**
+ * Toggles an issue inside a single device category.
+ * - Multiple issues can be selected within the same category (deviceType).
+ * - Selecting an issue from a different category switches the category and replaces previous issues.
+ */
+export const toggleCategoryIssueSelection = (
+  current: { deviceType: DeviceType | null; issues: string[] },
+  targetDeviceType: DeviceType,
+  rawIssue: string
+): {
+  deviceType: DeviceType;
+  issues: string[];
+  formattedDescription: string;
+} => {
+  const cleanIssue = stripPriceFromIssue(rawIssue);
+
+  if (current.deviceType !== targetDeviceType) {
+    const nextIssues = cleanIssue ? [cleanIssue] : [];
+    return {
+      deviceType: targetDeviceType,
+      issues: nextIssues,
+      formattedDescription: nextIssues.join('; '),
+    };
+  }
+
+  const exists = current.issues.includes(cleanIssue);
+  const nextIssues = exists
+    ? current.issues.filter((item) => item !== cleanIssue)
+    : [...current.issues, cleanIssue];
+
+  return {
+    deviceType: targetDeviceType,
+    issues: nextIssues,
+    formattedDescription: nextIssues.join('; '),
+  };
+};
+

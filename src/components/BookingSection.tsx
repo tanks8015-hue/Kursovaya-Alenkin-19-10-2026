@@ -18,6 +18,8 @@ import {
 interface BookingSectionProps {
   currentUser: UserAccount | null;
   preselectedDevice: DeviceType | null;
+  presetIssue?: string | null;
+  onDeviceCategoryChange?: (deviceType: DeviceType) => void;
   onCreateTicket: (
     input: Omit<NewTicketInput, 'userId'>
   ) => { ticket?: RepairTicket; error?: string };
@@ -27,6 +29,8 @@ interface BookingSectionProps {
 export const BookingSection: React.FC<BookingSectionProps> = ({
   currentUser,
   preselectedDevice,
+  presetIssue,
+  onDeviceCategoryChange,
   onCreateTicket,
   onOpenAuthModal,
 }) => {
@@ -70,6 +74,17 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
       setDeviceType(preselectedDevice);
     }
   }, [preselectedDevice]);
+
+  useEffect(() => {
+    if (presetIssue !== null && presetIssue !== undefined) {
+      setIssueDescription(presetIssue);
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next.issueDescription;
+        return next;
+      });
+    }
+  }, [presetIssue]);
 
   const phoneDigitsCount = clientPhone.replace(/\D/g, '').length;
 
@@ -160,54 +175,62 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
     setIssueDescription('');
     setFieldErrors({});
     setTouched({});
+    onDeviceCategoryChange?.(deviceType);
   };
 
   return (
     <section
       id="booking-form"
-      className="py-16 md:py-20 bg-white border-b-2 border-slate-300"
+      className="py-14 md:py-18 bg-white border-b-2 border-slate-300"
     >
       <div className="max-w-[1360px] mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left Explanation Column */}
+          {/* Left Explanation Column: Simple & Friendly 3 Steps */}
           <div className="lg:col-span-5">
             <p className="text-xs font-semibold text-blue-700 mb-2">
-              Онлайн-регистрация устройства
+              Быстрая запись без очередей · Бесплатная диагностика 0 ₽
             </p>
             <h2
               className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight mb-4"
               style={{ textWrap: 'balance' }}
             >
-              Оформить заявку на диагностику и ремонт
+              Оставить заявку на ремонт техники
             </h2>
-            <p className="text-sm sm:text-base text-slate-700 leading-relaxed mb-8">
-              Каждая созданная заявка проходит автоматическую проверку корректности
-              контактных данных, получает уникальный номер (например,{' '}
+            <p className="text-sm sm:text-base text-slate-700 leading-relaxed mb-6">
+              Заполните короткую форму — вы сразу получите номер заказа (например,{' '}
               <span className="font-mono font-semibold text-slate-900">KV-2042</span>) и
-              сразу отображается в вашей персональной вкладке «Мои заявки».
+              сможете отслеживать ход ремонта онлайн на сайте.
             </p>
 
-            <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-6 space-y-4 shadow-md">
+            <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-6 space-y-4 shadow-md mb-5">
               <h3 className="text-sm font-bold font-display text-white">
-                Правила оформления и контроль качества:
+                Как проходит ремонт в 3 простых шага:
               </h3>
               <ol className="space-y-3 text-xs sm:text-sm text-slate-300">
                 <li>
-                  <strong className="text-white">1. Проверка данных:</strong> Телефон
-                  проверяется на формат РФ (ровно 11 цифр, начинается с +7 или 8), имя — на
-                  отсутствие цифр.
+                  <strong className="text-emerald-400">1. Бесплатная диагностика (0 ₽):</strong>{' '}
+                  Мастер осматривает устройство при вас за 30–45 минут и называет точную
+                  стоимость до начала работ.
                 </li>
                 <li>
-                  <strong className="text-white">2. Распределение нагрузки:</strong>{' '}
-                  Администратор в CRM видит загруженность каждого мастера и назначает
-                  свободного профильного инженера.
+                  <strong className="text-cyan-300">2. Быстрый ремонт:</strong> Если цена
+                  вас устраивает, приступаем к ремонту. Статус заказа и имя мастера видны
+                  в разделе «Мои заявки».
                 </li>
                 <li>
-                  <strong className="text-white">3. Отзыв после выдачи:</strong> Как только
-                  заявка получает статус «Выдана», вы можете опубликовать реальный отзыв о
-                  ремонте прямо из личного кабинета.
+                  <strong className="text-amber-300">3. Проверка и гарантия 12 мес.:</strong>{' '}
+                  Вы проверяете исправное устройство и получаете официальную гарантию на
+                  работу и запчасти.
                 </li>
               </ol>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#F1F5F9] border border-slate-300 text-xs text-slate-700 space-y-1.5">
+              <p className="font-bold text-slate-900">
+                Ждём вас в сервисном центре «КВАНТ Сервис»:
+              </p>
+              <p>📍 г. Москва, ул. Малая Бронная, д. 24 (м. Тверская, 4 мин. пешком)</p>
+              <p>📞 Телефон: <strong className="font-mono text-slate-900">+7 (495) 128-44-90</strong> · Ежедневно 09:00–21:00</p>
             </div>
           </div>
 
@@ -359,7 +382,11 @@ export const BookingSection: React.FC<BookingSectionProps> = ({
                   <select
                     id="device-type"
                     value={deviceType}
-                    onChange={(e) => setDeviceType(e.target.value as DeviceType)}
+                    onChange={(e) => {
+                      const nextType = e.target.value as DeviceType;
+                      setDeviceType(nextType);
+                      onDeviceCategoryChange?.(nextType);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
                   >
                     {DEVICE_TYPES.map((type) => (

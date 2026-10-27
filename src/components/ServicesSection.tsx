@@ -1,277 +1,456 @@
-import React from 'react';
-import { ArrowUpRight, CheckCircle2 } from 'lucide-react';
-import { DeviceType } from '../types';
-import { SERVICES_CATALOG } from '../utils/repairStore';
+import React, { useState } from 'react';
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Search,
+  Wrench,
+  Sparkles,
+  Clock,
+  ShieldCheck,
+  ChevronDown,
+  Check,
+} from 'lucide-react';
+import { DeviceType, UserAccount } from '../types';
+import { SERVICES_CATALOG, stripPriceFromIssue } from '../utils/repairStore';
 
 interface ServicesSectionProps {
+  selectedDevice: DeviceType | null;
+  selectedIssues: string[];
+  onToggleServiceIssue: (deviceType: DeviceType, rawIssue: string) => void;
   onSelectServiceDevice: (deviceType: DeviceType) => void;
+  onQuickTrackClick?: () => void;
+  currentUser?: UserAccount | null;
+  myTicketsCount?: number;
+  staffTicketsCount?: number;
+  onSwitchToAdmin?: () => void;
 }
 
-const SERVICE_HEADER_IMAGES: Record<string, { src: string; alt: string }> = {
-  'srv-smartphones': {
-    alt: 'Ремонт смартфонов и планшетов — OLED-матрицы и микропайка плат',
+const CATEGORY_SHOWCASE_ILLUSTRATIONS: Record<
+  string,
+  { src: string; alt: string; shortTitle: string }
+> = {
+  'srv-tv-monitors': {
+    shortTitle: 'РЕМОНТ ТЕЛЕВИЗОРОВ И МОНИТОРОВ',
+    alt: 'Ремонт телевизоров и мониторов',
     src: `data:image/svg+xml;utf8,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" fill="none">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" fill="none">
         <defs>
-          <linearGradient id="bg1" x1="0" y1="0" x2="800" y2="360" gradientUnits="userSpaceOnUse">
+          <linearGradient id="tvScreen" x1="60" y1="20" x2="300" y2="155" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#0F172A"/>
-            <stop offset="55%" stop-color="#1E3A8A"/>
-            <stop offset="100%" stop-color="#0284C7"/>
+            <stop offset="50%" stop-color="#1E293B"/>
+            <stop offset="100%" stop-color="#090D16"/>
           </linearGradient>
-          <linearGradient id="scr1" x1="250" y1="40" x2="550" y2="320" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#38BDF8"/>
-            <stop offset="50%" stop-color="#2563EB"/>
-            <stop offset="100%" stop-color="#1D4ED8"/>
+          <linearGradient id="tvGlow" x1="60" y1="20" x2="220" y2="150" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.28"/>
+            <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
           </linearGradient>
         </defs>
-        <rect width="800" height="360" fill="url(#bg1)"/>
-        <!-- Subtle tech grid -->
-        <g stroke="#38BDF8" stroke-opacity="0.14" stroke-width="1">
-          <line x1="0" y1="60" x2="800" y2="60"/>
-          <line x1="0" y1="120" x2="800" y2="120"/>
-          <line x1="0" y1="180" x2="800" y2="180"/>
-          <line x1="0" y1="240" x2="800" y2="240"/>
-          <line x1="0" y1="300" x2="800" y2="300"/>
-          <line x1="160" y1="0" x2="160" y2="360"/>
-          <line x1="320" y1="0" x2="320" y2="360"/>
-          <line x1="480" y1="0" x2="480" y2="360"/>
-          <line x1="640" y1="0" x2="640" y2="360"/>
-        </g>
-        <!-- Circuit traces -->
-        <path d="M70 280 H190 L230 240 H310" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.5" fill="none"/>
-        <circle cx="70" cy="280" r="5" fill="#38BDF8"/>
-        <path d="M730 95 H610 L570 135 H510" stroke="#34D399" stroke-width="2.5" stroke-opacity="0.6" fill="none"/>
-        <circle cx="730" cy="95" r="5" fill="#34D399"/>
-        <!-- Tablet / PCB diagnostic frame on left -->
-        <rect x="120" y="75" width="230" height="210" rx="18" fill="#0F172A" stroke="#60A5FA" stroke-width="3"/>
-        <rect x="136" y="92" width="198" height="176" rx="10" fill="#1E293B"/>
-        <!-- Microchip on PCB -->
-        <rect x="190" y="135" width="90" height="90" rx="10" fill="#0F172A" stroke="#38BDF8" stroke-width="2.5"/>
-        <path d="M210 120V135M235 120V135M260 120V135M210 225V240M235 225V240M260 225V240M175 155H190M175 180H190M175 205H190M280 155H295M280 180H295M280 205H295" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/>
-        <text x="235" y="185" text-anchor="middle" fill="#E0F2FE" font-family="monospace" font-size="15" font-weight="bold">OLED IC</text>
-        <!-- Flagship Smartphone on right -->
-        <rect x="420" y="38" width="165" height="284" rx="26" fill="#0F172A" stroke="#93C5FD" stroke-width="4"/>
-        <rect x="431" y="50" width="143" height="260" rx="18" fill="url(#scr1)"/>
-        <!-- Dynamic island -->
-        <rect x="478" y="60" width="50" height="12" rx="6" fill="#0F172A"/>
-        <!-- Diagnostic waveform on screen -->
-        <path d="M445 185 L470 185 L482 152 L498 215 L514 165 L528 195 L542 185 L560 185" stroke="#34D399" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="503" cy="118" r="22" fill="#0F172A" fill-opacity="0.35" stroke="#E0F2FE" stroke-width="2"/>
-        <path d="M495 118 L501 124 L513 112" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="452" y="245" width="102" height="8" rx="4" fill="#E0F2FE" fill-opacity="0.7"/>
-        <rect x="468" y="262" width="70" height="6" rx="3" fill="#E0F2FE" fill-opacity="0.45"/>
+        <rect x="64" y="20" width="232" height="134" rx="8" fill="#06B6D4" fill-opacity="0.18"/>
+        <rect x="68" y="24" width="224" height="126" rx="6" fill="#090D16" stroke="#0891B2" stroke-width="2.5"/>
+        <rect x="74" y="30" width="212" height="114" rx="3" fill="url(#tvScreen)"/>
+        <polygon points="74,30 195,30 135,144 74,144" fill="url(#tvGlow)"/>
+        <circle cx="180" cy="147" r="2" fill="#22D3EE"/>
+        <path d="M115 150 L92 172 M115 150 L125 166" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+        <path d="M245 150 L268 172 M245 150 L235 166" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="180" cy="176" rx="110" ry="5" fill="#CBD5E1" fill-opacity="0.55"/>
       </svg>
     `)}`,
   },
   'srv-laptops': {
-    alt: 'Компонентный ремонт ноутбуков и MacBook — BGA-пайка материнских плат',
+    shortTitle: 'РЕМОНТ НОУТБУКОВ И КОМПЬЮТЕРОВ',
+    alt: 'Ремонт ноутбуков и компьютеров',
     src: `data:image/svg+xml;utf8,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" fill="none">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" fill="none">
         <defs>
-          <linearGradient id="bg2" x1="0" y1="0" x2="800" y2="360" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#090D16"/>
-            <stop offset="50%" stop-color="#1E293B"/>
-            <stop offset="100%" stop-color="#1D4ED8"/>
+          <linearGradient id="monScr" x1="145" y1="35" x2="295" y2="145" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1E293B"/>
+            <stop offset="100%" stop-color="#090D16"/>
           </linearGradient>
-          <linearGradient id="lapScr" x1="220" y1="50" x2="580" y2="250" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1E3A8A"/>
+          <linearGradient id="towerGrad" x1="68" y1="30" x2="132" y2="168" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#475569"/>
+            <stop offset="50%" stop-color="#1E293B"/>
             <stop offset="100%" stop-color="#0F172A"/>
           </linearGradient>
         </defs>
-        <rect width="800" height="360" fill="url(#bg2)"/>
-        <g stroke="#60A5FA" stroke-opacity="0.12" stroke-width="1">
-          <line x1="0" y1="72" x2="800" y2="72"/>
-          <line x1="0" y1="144" x2="800" y2="144"/>
-          <line x1="0" y1="216" x2="800" y2="216"/>
-          <line x1="0" y1="288" x2="800" y2="288"/>
-          <line x1="200" y1="0" x2="200" y2="360"/>
-          <line x1="400" y1="0" x2="400" y2="360"/>
-          <line x1="600" y1="0" x2="600" y2="360"/>
-        </g>
-        <!-- Laptop Top Lid & Screen -->
-        <rect x="210" y="46" width="380" height="224" rx="16" fill="#0F172A" stroke="#94A3B8" stroke-width="3.5"/>
-        <rect x="226" y="62" width="348" height="192" rx="8" fill="url(#lapScr)" stroke="#38BDF8" stroke-width="1.5"/>
-        <!-- Motherboard BGA schematic on screen -->
-        <rect x="260" y="92" width="125" height="130" rx="10" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
-        <rect x="288" y="120" width="70" height="70" rx="6" fill="#1E3A8A" stroke="#60A5FA" stroke-width="2"/>
-        <text x="323" y="160" text-anchor="middle" fill="#FFFFFF" font-family="monospace" font-size="14" font-weight="bold">M3 MAX</text>
-        <!-- BGA solder balls grid -->
-        <g fill="#34D399">
-          <circle cx="430" cy="110" r="4"/><circle cx="450" cy="110" r="4"/><circle cx="470" cy="110" r="4"/><circle cx="490" cy="110" r="4"/>
-          <circle cx="430" cy="130" r="4"/><circle cx="450" cy="130" r="4"/><circle cx="470" cy="130" r="4"/><circle cx="490" cy="130" r="4"/>
-          <circle cx="430" cy="150" r="4"/><circle cx="450" cy="150" r="4"/><circle cx="470" cy="150" r="4"/><circle cx="490" cy="150" r="4"/>
-        </g>
-        <!-- Voltage rail bars -->
-        <rect x="426" y="178" width="115" height="10" rx="5" fill="#38BDF8"/>
-        <rect x="426" y="198" width="90" height="10" rx="5" fill="#34D399"/>
-        <rect x="426" y="218" width="102" height="10" rx="5" fill="#F59E0B"/>
-        <!-- Laptop Unibody Base -->
-        <path d="M150 270 H650 L625 296 H175 L150 270Z" fill="#CBD5E1" stroke="#64748B" stroke-width="2"/>
-        <rect x="360" y="270" width="80" height="6" rx="3" fill="#475569"/>
+        <ellipse cx="185" cy="175" rx="118" ry="6" fill="#CBD5E1" fill-opacity="0.6"/>
+        <rect x="70" y="30" width="62" height="138" rx="6" fill="url(#towerGrad)" stroke="#0891B2" stroke-width="2"/>
+        <rect x="77" y="40" width="48" height="10" rx="2" fill="#0F172A" stroke="#64748B" stroke-width="1"/>
+        <rect x="77" y="55" width="48" height="10" rx="2" fill="#0F172A" stroke="#64748B" stroke-width="1"/>
+        <circle cx="101" cy="85" r="7" fill="#0F172A" stroke="#22D3EE" stroke-width="2"/>
+        <circle cx="101" cy="85" r="2.5" fill="#22D3EE"/>
+        <rect x="80" y="108" width="42" height="48" rx="4" fill="#090D16" stroke="#334155" stroke-width="1"/>
+        <rect x="144" y="38" width="154" height="102" rx="6" fill="#090D16" stroke="#0891B2" stroke-width="2.5"/>
+        <rect x="150" y="44" width="142" height="90" rx="3" fill="url(#monScr)"/>
+        <polygon points="150,44 235,44 195,134 150,134" fill="#38BDF8" fill-opacity="0.16"/>
+        <rect x="210" y="140" width="22" height="18" fill="#475569"/>
+        <path d="M182 158 H260 L268 166 H174 L182 158Z" fill="#64748B"/>
       </svg>
     `)}`,
   },
-  'srv-tv-monitors': {
-    alt: 'Ремонт телевизоров OLED/QLED и профессиональных мониторов',
+  'srv-smartphones': {
+    shortTitle: 'РЕМОНТ СМАРТФОНОВ И ПЛАНШЕТОВ',
+    alt: 'Ремонт смартфонов и планшетов',
     src: `data:image/svg+xml;utf8,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" fill="none">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" fill="none">
         <defs>
-          <linearGradient id="bg3" x1="0" y1="0" x2="800" y2="360" gradientUnits="userSpaceOnUse">
+          <linearGradient id="padScr" x1="85" y1="30" x2="215" y2="160" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#0F172A"/>
-            <stop offset="50%" stop-color="#1E1B4B"/>
-            <stop offset="100%" stop-color="#1D4ED8"/>
+            <stop offset="50%" stop-color="#1E3A8A"/>
+            <stop offset="100%" stop-color="#0284C7"/>
           </linearGradient>
-          <linearGradient id="tvPanel" x1="170" y1="45" x2="630" y2="265" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#2563EB"/>
-            <stop offset="45%" stop-color="#4F46E5"/>
-            <stop offset="100%" stop-color="#06B6D4"/>
+          <linearGradient id="phScr" x1="200" y1="45" x2="275" y2="168" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#38BDF8"/>
+            <stop offset="50%" stop-color="#2563EB"/>
+            <stop offset="100%" stop-color="#0F172A"/>
           </linearGradient>
         </defs>
-        <rect width="800" height="360" fill="url(#bg3)"/>
-        <!-- Ultra-wide 4K OLED Display Frame -->
-        <rect x="155" y="42" width="490" height="236" rx="12" fill="#090D16" stroke="#93C5FD" stroke-width="3.5"/>
-        <rect x="169" y="56" width="462" height="208" rx="6" fill="url(#tvPanel)"/>
-        <!-- Calibration color bars & LED backlight array -->
-        <rect x="195" y="80" width="185" height="160" rx="8" fill="#0F172A" fill-opacity="0.82" stroke="#38BDF8" stroke-width="2"/>
-        <text x="287" y="110" text-anchor="middle" fill="#38BDF8" font-family="monospace" font-size="13" font-weight="bold">LED BACKLIGHT</text>
-        <g stroke="#E0F2FE" stroke-width="3" stroke-linecap="round">
-          <line x1="220" y1="132" x2="355" y2="132"/>
-          <line x1="220" y1="156" x2="355" y2="156"/>
-          <line x1="220" y1="180" x2="355" y2="180"/>
-          <line x1="220" y1="204" x2="355" y2="204"/>
-        </g>
-        <g fill="#34D399">
-          <circle cx="240" cy="132" r="5"/><circle cx="288" cy="132" r="5"/><circle cx="335" cy="132" r="5"/>
-          <circle cx="240" cy="156" r="5"/><circle cx="288" cy="156" r="5"/><circle cx="335" cy="156" r="5"/>
-          <circle cx="240" cy="180" r="5"/><circle cx="288" cy="180" r="5"/><circle cx="335" cy="180" r="5"/>
-          <circle cx="240" cy="204" r="5"/><circle cx="288" cy="204" r="5"/><circle cx="335" cy="204" r="5"/>
-        </g>
-        <!-- T-Con & Oscilloscope wave on right half of screen -->
-        <rect x="405" y="80" width="200" height="160" rx="8" fill="#0F172A" fill-opacity="0.82" stroke="#34D399" stroke-width="2"/>
-        <text x="505" y="110" text-anchor="middle" fill="#34D399" font-family="monospace" font-size="13" font-weight="bold">4K OLED T-CON</text>
-        <path d="M425 175 Q445 125 465 175 T505 175 T545 175 T585 175" stroke="#38BDF8" stroke-width="3.5" fill="none"/>
-        <!-- Monitor Stand -->
-        <rect x="372" y="278" width="56" height="28" fill="#64748B"/>
-        <path d="M310 306 H490 L505 318 H295 L310 306Z" fill="#94A3B8"/>
+        <ellipse cx="180" cy="176" rx="105" ry="6" fill="#CBD5E1" fill-opacity="0.6"/>
+        <rect x="88" y="28" width="124" height="140" rx="12" fill="#0F172A" stroke="#0891B2" stroke-width="2.5"/>
+        <rect x="95" y="36" width="110" height="124" rx="6" fill="url(#padScr)"/>
+        <polygon points="95,36 165,36 135,160 95,160" fill="#FFFFFF" fill-opacity="0.1"/>
+        <rect x="196" y="44" width="74" height="126" rx="14" fill="#090D16" stroke="#22D3EE" stroke-width="2.5"/>
+        <rect x="202" y="51" width="62" height="112" rx="10" fill="url(#phScr)"/>
+        <rect x="221" y="56" width="24" height="5" rx="2.5" fill="#090D16"/>
+        <circle cx="233" cy="110" r="16" fill="#0F172A" fill-opacity="0.45" stroke="#34D399" stroke-width="2"/>
+        <path d="M227 110 L231 115 L240 105" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `)}`,
   },
   'srv-consoles': {
-    alt: 'Ремонт игровых консолей PlayStation 5, Xbox и видеокарт',
+    shortTitle: 'РЕМОНТ КОНСОЛЕЙ И ТЕХНИКИ',
+    alt: 'Ремонт игровых консолей и домашней электроники',
     src: `data:image/svg+xml;utf8,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" fill="none">
-        <defs>
-          <linearGradient id="bg4" x1="0" y1="0" x2="800" y2="360" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#090D16"/>
-            <stop offset="50%" stop-color="#172554"/>
-            <stop offset="100%" stop-color="#1E40AF"/>
-          </linearGradient>
-        </defs>
-        <rect width="800" height="360" fill="url(#bg4)"/>
-        <g stroke="#38BDF8" stroke-opacity="0.12" stroke-width="1">
-          <line x1="0" y1="90" x2="800" y2="90"/>
-          <line x1="0" y1="180" x2="800" y2="180"/>
-          <line x1="0" y1="270" x2="800" y2="270"/>
-          <line x1="260" y1="0" x2="260" y2="360"/>
-          <line x1="540" y1="0" x2="540" y2="360"/>
-        </g>
-        <!-- GPU / Console Cooling Turbine & HDMI 2.1 Module on Left -->
-        <rect x="135" y="70" width="250" height="220" rx="18" fill="#0F172A" stroke="#60A5FA" stroke-width="3"/>
-        <circle cx="260" cy="162" r="64" fill="#1E293B" stroke="#38BDF8" stroke-width="3"/>
-        <circle cx="260" cy="162" r="22" fill="#0F172A" stroke="#34D399" stroke-width="2.5"/>
-        <path d="M260 98 L275 140 M260 226 L245 184 M196 162 L238 147 M324 162 L282 177" stroke="#60A5FA" stroke-width="3" stroke-linecap="round"/>
-        <rect x="175" y="246" width="170" height="24" rx="6" fill="#1E3A8A" stroke="#38BDF8" stroke-width="1.5"/>
-        <text x="260" y="262" text-anchor="middle" fill="#E0F2FE" font-family="monospace" font-size="12" font-weight="bold">HDMI 2.1 · 4K 120Hz</text>
-        <!-- Gamepad / DualSense Controller Silhouette on Right -->
-        <rect x="430" y="70" width="240" height="220" rx="22" fill="#0F172A" stroke="#38BDF8" stroke-width="3"/>
-        <!-- D-pad -->
-        <path d="M485 145 H515 M500 130 V160" stroke="#60A5FA" stroke-width="8" stroke-linecap="round"/>
-        <!-- Action buttons -->
-        <circle cx="600" cy="130" r="7" fill="#34D399"/>
-        <circle cx="618" cy="148" r="7" fill="#F87171"/>
-        <circle cx="582" cy="148" r="7" fill="#60A5FA"/>
-        <circle cx="600" cy="166" r="7" fill="#FBBF24"/>
-        <!-- Hall Effect Analog Sticks -->
-        <circle cx="525" cy="205" r="20" fill="#1E293B" stroke="#34D399" stroke-width="3"/>
-        <circle cx="525" cy="205" r="7" fill="#34D399"/>
-        <circle cx="575" cy="205" r="20" fill="#1E293B" stroke="#34D399" stroke-width="3"/>
-        <circle cx="575" cy="205" r="7" fill="#34D399"/>
-        <text x="550" y="262" text-anchor="middle" fill="#34D399" font-family="monospace" font-size="12" font-weight="bold">HALL EFFECT + LIQUID METAL</text>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" fill="none">
+        <ellipse cx="180" cy="176" rx="112" ry="6" fill="#CBD5E1" fill-opacity="0.6"/>
+        <path d="M96 26 L146 22 L142 166 L98 166 Z" fill="#F8FAFC" stroke="#0891B2" stroke-width="2.5"/>
+        <rect x="108" y="26" width="24" height="140" rx="4" fill="#090D16"/>
+        <line x1="108" y1="35" x2="108" y2="120" stroke="#22D3EE" stroke-width="2"/>
+        <line x1="132" y1="35" x2="132" y2="120" stroke="#22D3EE" stroke-width="2"/>
+        <rect x="152" y="76" width="132" height="86" rx="28" fill="#0F172A" stroke="#0891B2" stroke-width="2.5"/>
+        <path d="M176 112 H196 M186 102 V122" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="250" cy="102" r="4.5" fill="#34D399"/>
+        <circle cx="260" cy="112" r="4.5" fill="#F87171"/>
+        <circle cx="240" cy="112" r="4.5" fill="#60A5FA"/>
+        <circle cx="250" cy="122" r="4.5" fill="#FBBF24"/>
+        <circle cx="204" cy="134" r="11" fill="#1E293B" stroke="#22D3EE" stroke-width="2"/>
+        <circle cx="232" cy="134" r="11" fill="#1E293B" stroke="#22D3EE" stroke-width="2"/>
       </svg>
     `)}`,
   },
 };
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({
+  selectedDevice,
+  selectedIssues,
+  onToggleServiceIssue,
   onSelectServiceDevice,
+  onQuickTrackClick,
+  currentUser,
+  myTicketsCount = 0,
+  staffTicketsCount = 0,
+  onSwitchToAdmin,
 }) => {
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
+
+  const isStaff =
+    currentUser?.role === 'admin' || currentUser?.role === 'master';
+  const isClient = currentUser?.role === 'client';
+
+  const handleCardDetailsClick = (serviceId: string) => {
+    setSelectedCategoryId(serviceId);
+    const detailEl = document.getElementById(`service-detail-${serviceId}`);
+    if (detailEl) {
+      detailEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
-    <section
-      id="services"
-      className="py-16 md:py-20 border-b-2 border-slate-300 bg-[#E2E8F0]"
-    >
-      <div className="max-w-[1360px] mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <p className="text-xs font-semibold text-blue-800 mb-2">
-              Прайс-лист и регламент работ · Бесплатная диагностика (0 руб.)
-            </p>
-            <h2
-              className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight"
-              style={{ textWrap: 'balance' }}
+    <section id="services" className="border-b-2 border-slate-300">
+      {/* PART 1: First-Screen Visual Showcase */}
+      <div
+        id="top"
+        className="relative overflow-hidden bg-[#06132E] text-white pt-8 pb-14 md:pt-11 md:pb-16 border-b-2 border-slate-800"
+        style={{
+          backgroundImage: `radial-gradient(circle at 18% 20%, rgba(14, 165, 233, 0.18), transparent 45%), radial-gradient(circle at 85% 75%, rgba(6, 182, 212, 0.16), transparent 50%), linear-gradient(180deg, #06132E 0%, #0A1D42 100%)`,
+        }}
+      >
+        {/* Subtle Circuit Trace SVG Backdrop */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-15 pointer-events-none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <pattern
+              id="circuit-pattern"
+              width="160"
+              height="160"
+              patternUnits="userSpaceOnUse"
             >
-              Услуги сервисного центра и базовые расценки
-            </h2>
-          </div>
-          <p className="text-sm text-slate-700 max-w-md">
-            Указана ориентировочная стоимость услуги вместе с комплектующими класса
-            Original / OEM. Первичная диагностика бесплатная (0 руб.).
-          </p>
-        </div>
+              <path
+                d="M 0 40 H 50 L 75 65 V 120 M 160 80 H 110 L 85 55 V 10 M 40 160 V 115 L 65 90 H 130"
+                fill="none"
+                stroke="#22D3EE"
+                strokeWidth="1.5"
+              />
+              <circle cx="75" cy="120" r="3.5" fill="#22D3EE" />
+              <circle cx="85" cy="10" r="3.5" fill="#22D3EE" />
+              <circle cx="130" cy="90" r="3.5" fill="#22D3EE" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#circuit-pattern)" />
+        </svg>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {SERVICES_CATALOG.map((service) => {
-            const headerVisual = SERVICE_HEADER_IMAGES[service.id];
-            return (
-              <article
-                key={service.id}
-                className="bg-white border-2 border-slate-300 shadow-sm rounded-xl overflow-hidden flex flex-col justify-between hover:border-blue-600 transition-colors"
+        <div className="relative max-w-[1360px] mx-auto px-6">
+          {/* Top Hero Title & Quick Action Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-9">
+            <div className="max-w-3xl">
+              <div className="inline-flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-300 mb-2.5">
+                <span>Бесплатная диагностика 0 ₽ за 30–45 минут</span>
+                <span aria-hidden="true">·</span>
+                <span>Гарантия 12 месяцев</span>
+                <span aria-hidden="true">·</span>
+                <span>ул. Малая Бронная, 24</span>
+              </div>
+              <h1
+                className="font-display font-extrabold tracking-tight text-white text-2xl sm:text-4xl lg:text-[40px] leading-[1.15] uppercase mb-2.5"
+                style={{ textWrap: 'balance' }}
               >
-                <div>
-                  {/* Service Card Header Photo Banner */}
-                  {headerVisual && (
-                    <div className="relative h-48 sm:h-52 w-full bg-slate-900 border-b border-slate-200 overflow-hidden">
-                      <img
-                        src={headerVisual.src}
-                        alt={headerVisual.alt}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-3.5 left-4 right-4 flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-950/85 text-blue-300 border border-blue-400/30 backdrop-blur-xs">
-                          Услуга {service.index} · {service.deviceType}
-                        </span>
-                        <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-emerald-600 text-white shadow-xs">
-                          Диагностика 0 ₽
-                        </span>
-                      </div>
-                      <div className="absolute bottom-3 right-4">
-                        <span className="px-3 py-1 rounded-lg text-sm font-mono font-bold bg-white/95 text-slate-900 shadow-sm tabular-nums">
-                          от {service.priceFrom.toLocaleString('ru-RU')} ₽
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                Профессиональный ремонт цифровой и бытовой техники
+              </h1>
+              <p className="text-sm sm:text-base font-bold uppercase tracking-wide text-cyan-200">
+                Мы обслуживаем не просто технику — мы помогаем людям! Выберите ваше устройство ниже:
+              </p>
+            </div>
 
-                  <div className="p-6 sm:p-8 pb-0 sm:pb-0">
-                    {/* Clean unboxed metadata with typographic separators */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 pb-3 mb-4 border-b border-slate-200">
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <a
+                href="#booking-form"
+                className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-lg shadow-md transition-colors whitespace-nowrap"
+              >
+                <Wrench className="w-4 h-4" aria-hidden="true" />
+                <span>Записаться на ремонт</span>
+              </a>
+
+              {isStaff && onSwitchToAdmin ? (
+                <button
+                  type="button"
+                  onClick={onSwitchToAdmin}
+                  className="inline-flex items-center gap-2 px-4 py-3 text-sm font-bold text-amber-200 bg-slate-900/90 border border-amber-400/50 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+                >
+                  <span>Рабочая панель ({staffTicketsCount})</span>
+                  <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onQuickTrackClick}
+                  className="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-slate-900/80 border border-cyan-400/40 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+                >
+                  <Search className="w-4 h-4 text-cyan-300" aria-hidden="true" />
+                  <span>
+                    {isClient
+                      ? `Мои заявки (${myTicketsCount})`
+                      : 'Проверить статус ремонта'}
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 4 Visual Category Cards on the First Screen */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {SERVICES_CATALOG.map((service) => {
+              const visual = CATEGORY_SHOWCASE_ILLUSTRATIONS[service.id];
+              const isCategoryActive = selectedDevice === service.deviceType;
+              const activeCountInCard = isCategoryActive
+                ? selectedIssues.length
+                : 0;
+              const isSelected =
+                selectedCategoryId === service.id || activeCountInCard > 0;
+
+              return (
+                <div
+                  key={service.id}
+                  data-testid={`hero-service-card-${service.id}`}
+                  className={`bg-white text-slate-900 rounded-2xl p-6 shadow-xl border-2 transition-all flex flex-col justify-between group ${
+                    isSelected
+                      ? 'border-cyan-400 ring-4 ring-cyan-400/25'
+                      : 'border-white hover:border-cyan-400'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 text-xs mb-2">
+                      <span className="font-mono font-bold text-cyan-800 bg-cyan-50 border border-cyan-200 px-2.5 py-0.5 rounded-md">
+                        от {service.priceFrom.toLocaleString('ru-RU')} ₽
+                      </span>
+                      <span className="text-[11px] font-semibold text-emerald-700">
+                        {service.turnaround}
+                      </span>
+                    </div>
+
+                    {visual && (
+                      <div
+                        onClick={() => onSelectServiceDevice(service.deviceType)}
+                        className="h-36 w-full flex items-center justify-center my-2 cursor-pointer group-hover:scale-[1.03] transition-transform"
+                      >
+                        <img
+                          src={visual.src}
+                          alt={visual.alt}
+                          referrerPolicy="no-referrer"
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                    )}
+
+                    <h2 className="text-center font-display font-extrabold text-sm sm:text-base tracking-wide uppercase text-cyan-800 mt-2 mb-3 min-h-[2.5rem] flex items-center justify-center">
+                      {visual ? visual.shortTitle : service.title}
+                    </h2>
+                    <div className="w-3/4 mx-auto h-[2px] bg-cyan-600/60 mb-3.5" />
+
+                    {/* Short 2-row preview of popular services (click to toggle selection without price) */}
+                    <ul className="space-y-1.5 text-xs text-slate-700 mb-5">
+                      {service.commonIssues.slice(0, 2).map((issue) => {
+                        const [rawTitle, rawPrice] = issue.split(' — ');
+                        const shortLabel = rawTitle.replace(/\s*\(.*?\)/g, '');
+                        const cleanIssue = stripPriceFromIssue(issue);
+                        const isIssueChecked =
+                          isCategoryActive &&
+                          selectedIssues.includes(cleanIssue);
+
+                        return (
+                          <li
+                            key={issue}
+                            onClick={() =>
+                              onToggleServiceIssue(service.deviceType, issue)
+                            }
+                            className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                              isIssueChecked
+                                ? 'bg-blue-50 border-blue-500 text-blue-950'
+                                : 'bg-slate-50 hover:bg-cyan-50 border-slate-200/80 text-slate-800'
+                            }`}
+                          >
+                            <span className="font-medium leading-tight flex items-center gap-1.5">
+                              {isIssueChecked && (
+                                <Check className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                              )}
+                              <span>{shortLabel}</span>
+                            </span>
+                            {rawPrice && (
+                              <span className="font-mono font-bold text-cyan-800 whitespace-nowrap shrink-0 text-[11px]">
+                                {rawPrice.replace('руб.', '₽')}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectServiceDevice(service.deviceType)}
+                      className={`w-full py-2.5 px-4 text-xs font-extrabold uppercase tracking-wider text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                        activeCountInCard > 0
+                          ? 'bg-blue-700 hover:bg-blue-800'
+                          : 'bg-slate-900 hover:bg-blue-700'
+                      }`}
+                    >
+                      <span>
+                        {activeCountInCard > 0
+                          ? `К заявке (выбрано: ${activeCountInCard})`
+                          : 'Записаться на ремонт'}
+                      </span>
+                      <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCardDetailsClick(service.id)}
+                      className="w-full py-1.5 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-700 hover:text-cyan-800 transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <span>Подробнее и прайс-лист</span>
+                      <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-7 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-cyan-100">
+            <div className="flex items-center gap-3 bg-slate-900/75 border border-slate-700/80 rounded-xl px-4 py-3">
+              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="text-white">Бесплатная диагностика 0 ₽:</strong> называем точную цену до начала ремонта, без скрытых доплат.
+              </span>
+            </div>
+            <div className="flex items-center gap-3 bg-slate-900/75 border border-slate-700/80 rounded-xl px-4 py-3">
+              <Clock className="w-4 h-4 text-cyan-400 shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="text-white">Быстрый ремонт при вас:</strong> типовые поломки смартфонов, консолей и ноутбуков устраняем за 45–120 минут.
+              </span>
+            </div>
+            <div className="flex items-center gap-3 bg-slate-900/75 border border-slate-700/80 rounded-xl px-4 py-3">
+              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="text-white">Честная гарантия 12 месяцев:</strong> оригинальные запчасти и онлайн-статус заказа на сайте.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* PART 2: Detailed Price Catalog with Single-Category Multi-Select (Without Price in Form) */}
+      <div className="py-12 md:py-16 bg-[#E2E8F0]">
+        <div className="max-w-[1360px] mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div>
+              <p className="text-xs font-semibold text-blue-800 mb-1.5">
+                Подробный прайс-лист · Можно выбрать сразу несколько поломок внутри одной категории
+              </p>
+              <h2
+                className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight"
+                style={{ textWrap: 'balance' }}
+              >
+                Что именно случилось с вашим устройством?
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-700 max-w-md">
+              Отметьте одну или несколько поломок в карточке вашего устройства — в
+              заявку перенесётся только само название поломки (без ценника).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {SERVICES_CATALOG.map((service) => {
+              const isCategoryActive = selectedDevice === service.deviceType;
+              const activeCountInCard = isCategoryActive
+                ? selectedIssues.length
+                : 0;
+              const isHighlighted =
+                selectedCategoryId === service.id || activeCountInCard > 0;
+
+              return (
+                <article
+                  key={service.id}
+                  id={`service-detail-${service.id}`}
+                  className={`bg-white border-2 shadow-sm rounded-xl overflow-hidden flex flex-col justify-between transition-all ${
+                    isHighlighted
+                      ? 'border-blue-600 ring-4 ring-blue-600/15'
+                      : 'border-slate-300 hover:border-blue-600'
+                  }`}
+                >
+                  <div className="p-6 pb-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 pb-3 mb-3 border-b border-slate-200">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-blue-700">
-                          Услуга {service.index}
+                          Категория {service.index}
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span className="font-medium text-slate-800">
+                        <span className="font-semibold text-slate-800">
                           {service.deviceType}
                         </span>
                         <span aria-hidden="true">·</span>
@@ -284,49 +463,104 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-bold font-display text-slate-900 mb-3">
-                      {service.index}. {service.title}
+                    <h3 className="text-xl font-bold font-display text-slate-900 mb-2">
+                      {service.title}
                     </h3>
 
-                    <p className="text-sm text-slate-700 leading-relaxed mb-6">
+                    <p className="text-sm text-slate-700 leading-relaxed mb-4">
                       {service.description}
                     </p>
 
-                    <div className="bg-[#F1F5F9] border border-slate-200 rounded-lg p-4 mb-6">
-                      <p className="text-xs font-bold text-slate-900 mb-2.5">
-                        Перечень услуг и базовые расценки:
-                      </p>
-                      <ul className="space-y-2 text-xs sm:text-sm text-slate-800">
-                        {service.commonIssues.map((item) => (
-                          <li
-                            key={item}
-                            className="flex items-baseline justify-between gap-2"
-                          >
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="bg-[#F1F5F9] border border-slate-200 rounded-lg p-3.5">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="text-xs font-bold text-slate-900">
+                          Частые поломки и цены (можно выбрать несколько):
+                        </p>
+                        {activeCountInCard > 0 && (
+                          <span className="text-[11px] font-bold text-blue-700">
+                            Выбрано: {activeCountInCard}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        {service.commonIssues.map((item) => {
+                          const cleanIssue = stripPriceFromIssue(item);
+                          const isChecked =
+                            isCategoryActive &&
+                            selectedIssues.includes(cleanIssue);
+
+                          return (
+                            <button
+                              key={item}
+                              type="button"
+                              aria-pressed={isChecked}
+                              onClick={() =>
+                                onToggleServiceIssue(service.deviceType, item)
+                              }
+                              className={`w-full text-left px-3 py-2.5 rounded-lg border text-xs sm:text-sm flex items-center justify-between gap-3 transition-colors cursor-pointer group ${
+                                isChecked
+                                  ? 'bg-blue-50 border-blue-600 text-slate-950 font-semibold shadow-2xs'
+                                  : 'bg-white hover:bg-blue-50/60 border-slate-200 hover:border-blue-400 text-slate-800'
+                              }`}
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <span
+                                  className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                                    isChecked
+                                      ? 'bg-blue-600 border-blue-600 text-white'
+                                      : 'bg-white border-slate-300 group-hover:border-blue-500'
+                                  }`}
+                                >
+                                  {isChecked && <Check className="w-3 h-3" />}
+                                </span>
+                                <span>{item}</span>
+                              </span>
+                              <span
+                                className={`text-[11px] font-bold whitespace-nowrap shrink-0 ${
+                                  isChecked
+                                    ? 'text-blue-700'
+                                    : 'text-blue-700 opacity-80 group-hover:opacity-100'
+                                }`}
+                              >
+                                {isChecked ? 'Выбрано ✓' : 'Выбрать →'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="px-6 sm:px-8 py-4 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Бесплатная диагностика (0 руб.)</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onSelectServiceDevice(service.deviceType)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-blue-700 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                  >
-                    <span>Записаться на услугу</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+                  <div className="px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>
+                        {activeCountInCard > 0
+                          ? `В заявку добавлено поломок: ${activeCountInCard}`
+                          : 'Диагностика бесплатно (0 ₽)'}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onSelectServiceDevice(service.deviceType)}
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        activeCountInCard > 0
+                          ? 'bg-blue-700 hover:bg-blue-800'
+                          : 'bg-slate-900 hover:bg-blue-700'
+                      }`}
+                    >
+                      <span>
+                        {activeCountInCard > 0
+                          ? `Записаться на услугу (${activeCountInCard})`
+                          : 'Записаться на услугу'}
+                      </span>
+                      <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

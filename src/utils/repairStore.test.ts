@@ -28,6 +28,8 @@ import {
   isServiceVoucherUnlocked,
   getServiceVoucherDetails,
   buildServiceVoucherPrintHtml,
+  stripPriceFromIssue,
+  toggleCategoryIssueSelection,
 } from './repairStore.ts';
 
 test('formatPhoneMask automatically formats raw digits into +7 (XXX) XXX-XX-XX without manual brackets or dashes', () => {
@@ -340,6 +342,54 @@ test('status change notification triggers when master changes status, does not r
   assert.equal(getUnreadStatusChangedTickets(afterClearAll, 'usr-102').length, 0);
 });
 
+test('stripPriceFromIssue removes price suffix and toggleCategoryIssueSelection supports multi-select in 1 category while blocking cross-category mixing', () => {
+  assert.equal(
+    stripPriceFromIssue('Замена экрана (дисплейного модуля) или стекла — от 3 900 руб.'),
+    'Замена экрана (дисплейного модуля) или стекла'
+  );
+  assert.equal(
+    stripPriceFromIssue('Замена аккумулятора (ёмкость 100%, без ошибок) — от 2 400 руб.'),
+    'Замена аккумулятора (ёмкость 100%, без ошибок)'
+  );
 
+  // Select 1st issue in Смартфон
+  const step1 = toggleCategoryIssueSelection(
+    { deviceType: null, issues: [] },
+    'Смартфон',
+    'Замена экрана (дисплейного модуля) или стекла — от 3 900 руб.'
+  );
+  assert.equal(step1.deviceType, 'Смартфон');
+  assert.deepEqual(step1.issues, ['Замена экрана (дисплейного модуля) или стекла']);
+  assert.equal(
+    step1.formattedDescription,
+    'Замена экрана (дисплейного модуля) или стекла'
+  );
 
+  // Select 2nd issue in the SAME category (Смартфон) -> combines without prices
+  const step2 = toggleCategoryIssueSelection(
+    step1,
+    'Смартфон',
+    'Замена аккумулятора (ёмкость 100%, без ошибок) — от 2 400 руб.'
+  );
+  assert.equal(step2.deviceType, 'Смартфон');
+  assert.equal(step2.issues.length, 2);
+  assert.equal(
+    step2.formattedDescription,
+    'Замена экрана (дисплейного модуля) или стекла; Замена аккумулятора (ёмкость 100%, без ошибок)'
+  );
 
+  // Clicking an issue from a DIFFERENT category (Ноутбук) resets Смартфон issues and selects only the Ноутбук issue
+  const step3 = toggleCategoryIssueSelection(
+    step2,
+    'Ноутбук',
+    'Чистка от пыли и замена термопасты (не шумит и не греется) — 3 200 руб.'
+  );
+  assert.equal(step3.deviceType, 'Ноутбук');
+  assert.deepEqual(step3.issues, [
+    'Чистка от пыли и замена термопасты (не шумит и не греется)',
+  ]);
+  assert.equal(
+    step3.formattedDescription,
+    'Чистка от пыли и замена термопасты (не шумит и не греется)'
+  );
+});

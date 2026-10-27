@@ -1,5 +1,5 @@
 import React from 'react';
-import { BellRing, Check, X, ArrowDownRight } from 'lucide-react';
+import { BellRing, Check, X, ArrowDownRight, MapPin, Phone } from 'lucide-react';
 import { RepairTicket, UserAccount } from '../types';
 
 interface HeaderProps {
@@ -39,77 +39,105 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-slate-900 text-white border-b border-slate-800 shadow-sm">
-      <div className="max-w-[1360px] mx-auto flex items-center justify-between gap-8 px-6 py-3.5">
-        {/* Zone 1: Brand Logo + Wordmark */}
-        <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            if (mode === 'admin') {
-              onSwitchToClient();
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="inline-flex items-center gap-3 group whitespace-nowrap shrink-0 cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-0.5 shadow-md shadow-blue-950/50 group-hover:from-blue-400 group-hover:to-indigo-600 transition-all">
-            <div className="w-full h-full bg-slate-950/90 rounded-[10px] flex items-center justify-center">
-              <svg
-                viewBox="0 0 36 36"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                aria-hidden="true"
-              >
-                {/* Microchip pins */}
-                <path
-                  d="M13 4V8M18 4V8M23 4V8M13 28V32M18 28V32M23 28V32M4 13H8M4 18H8M4 23H8M28 13H32M28 18H32M28 23H32"
-                  stroke="#60A5FA"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                {/* Outer chip frame */}
-                <rect
-                  x="8"
-                  y="8"
-                  width="20"
-                  height="20"
-                  rx="4"
-                  fill="#1E3A8A"
-                  stroke="#38BDF8"
-                  strokeWidth="2"
-                />
-                {/* Quantum K / Pulse core */}
-                <path
-                  d="M13 13V23M13 18L20 13M15.5 16.5L21 23"
-                  stroke="#FFFFFF"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <circle cx="22" cy="14" r="1.5" fill="#34D399" />
-              </svg>
+      <div className="max-w-[1360px] mx-auto flex items-center justify-between gap-4 px-6 py-3">
+        {/* Zone 1: Brand Logo + Wordmark + Address & Phone (like reference header) */}
+        <div className="flex items-center gap-6 shrink-0">
+          <a
+            href="#top"
+            onClick={(e) => {
+              e.preventDefault();
+              if (mode === 'admin') {
+                onSwitchToClient();
+              }
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="inline-flex items-center gap-3 group whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-0.5 shadow-md shadow-blue-950/50 group-hover:from-blue-400 group-hover:to-indigo-600 transition-all">
+              <div className="w-full h-full bg-slate-950/90 rounded-[10px] flex items-center justify-center">
+                <svg
+                  viewBox="0 0 36 36"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M13 4V8M18 4V8M23 4V8M13 28V32M18 28V32M23 28V32M4 13H8M4 18H8M4 23H8M28 13H32M28 18H32M28 23H32"
+                    stroke="#60A5FA"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <rect
+                    x="8"
+                    y="8"
+                    width="20"
+                    height="20"
+                    rx="4"
+                    fill="#1E3A8A"
+                    stroke="#38BDF8"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M13 13V23M13 18L20 13M15.5 16.5L21 23"
+                    stroke="#FFFFFF"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="22" cy="14" r="1.5" fill="#34D399" />
+                </svg>
+              </div>
             </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-white font-display leading-none">
+                КВАНТ Сервис
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 mt-1">
+                Сервисный центр
+              </span>
+            </div>
+          </a>
+
+          {/* Visible Address & Phone in Header for immediate clarity */}
+          <div className="hidden xl:flex items-center gap-5 pl-5 border-l border-slate-800 text-xs text-slate-300">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <MapPin className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-semibold text-white leading-tight">
+                  г. Москва, ул. Малая Бронная, 24
+                </p>
+                <p className="text-[11px] text-slate-400 leading-tight">
+                  м. Тверская · Ежедневно 09:00–21:00
+                </p>
+              </div>
+            </div>
+            <a
+              href="tel:+74951284490"
+              className="flex items-center gap-2 whitespace-nowrap hover:text-white transition-colors"
+            >
+              <Phone className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
+              <div>
+                <p className="font-mono font-bold text-white leading-tight">
+                  +7 (495) 128-44-90
+                </p>
+                <p className="text-[11px] text-emerald-400 leading-tight">
+                  Диагностика 0 ₽
+                </p>
+              </div>
+            </a>
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight text-white font-display leading-none">
-              КВАНТ Сервис
-            </span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 mt-1">
-              Инженерный центр
-            </span>
-          </div>
-        </a>
+        </div>
 
         {/* Zone 2: Navigation links */}
         {mode === 'client' ? (
           <nav
             aria-label="Основная навигация"
-            className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300"
+            className="hidden md:flex items-center gap-5 text-sm font-medium text-slate-300"
           >
             <a
               href="#services"
-              className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
+              className="text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0 font-semibold"
             >
               Услуги и цены
             </a>
@@ -117,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
               href="#booking-form"
               className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
             >
-              Оформить заявку
+              Оставить заявку
             </a>
             <a
               href="#client-cabinet"
@@ -127,13 +155,13 @@ export const Header: React.FC<HeaderProps> = ({
                 ? `Заявки на ремонт (${staffTicketsCount})`
                 : currentUser?.role === 'client'
                 ? `Мои заявки (${myTicketsCount})`
-                : 'Мои заявки'}
+                : 'Статус ремонта'}
             </a>
             <a
               href="#reviews"
               className="hover:text-white hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
             >
-              Кейсы и отзывы
+              Отзывы
             </a>
             {isStaff && (
               <button
@@ -165,8 +193,16 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         )}
 
-        {/* Zone 3: 1 primary action */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Zone 3: Quick action & Auth */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {mode === 'client' && (
+            <a
+              href="#booking-form"
+              className="hidden sm:inline-flex items-center px-3.5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap shrink-0"
+            >
+              Оставить заявку
+            </a>
+          )}
           {!currentUser ? (
             <button
               type="button"
